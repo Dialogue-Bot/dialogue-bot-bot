@@ -13,7 +13,7 @@ class SendText extends ComponentDialog {
   }
 
   async SendTextAction(step) {
-    const { name, text, nextAction, prompt_type, extend, buttons } = step._info.options;
+    const { name, nextAction, prompt_type, extend, buttons, contents } = step._info.options;
 
     console.log(`[SendMessage] ${name}`);
 
@@ -21,13 +21,13 @@ class SendText extends ComponentDialog {
 
     const { language, data } = conversationData;
 
-    let msg = getTranslatedMessage(text, language);
+    let msg = getTranslatedMessage(contents, language);
 
     if (msg.message) {
       msg.message = replaceData({ text: msg.message, data: conversationData.data });
     }
 
-    msg = formatMessage({ text: (msg && msg.message) || '', conversationData, type: prompt_type, extend });
+    msg = formatMessage({ text: (msg && msg.message) || '', conversationData, type: msg.type, extend });
 
     if (Array.isArray(buttons) && buttons.length) {
       msg.channelData = {};

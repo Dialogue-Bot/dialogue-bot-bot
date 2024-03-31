@@ -1,7 +1,8 @@
 const endConversation = async (step, message) => {
   if (message) await step.context.sendActivity(message);
-  if (step.parent && typeof step.parent.cancelAllDialogs == 'function') await step.parent.cancelAllDialogs();
-  if (typeof step.cancelAllDialogs == 'function') await step.cancelAllDialogs();
+  if (step.parent && typeof step.parent.cancelAllDialogs == "function")
+    await step.parent.cancelAllDialogs();
+  if (typeof step.cancelAllDialogs == "function") await step.cancelAllDialogs();
 
   return await step.endDialog();
 };
@@ -10,21 +11,25 @@ const replaceData = ({ text, data }) => {
   if (!data || !text) return text;
 
   try {
-    text = text.replace(/{([a-zA-Z0-9_ ]+(?:->[a-zA-Z0-9_ ]+)*)}/g, (match, key) => {
-      return key.split('->').reduce((o, i) => o[i], data);
-    });
+    text = text.replace(
+      /{([a-zA-Z0-9_ ]+(?:->[a-zA-Z0-9_ ]+)*)}/g,
+      (match, key) => {
+        return key.split("->").reduce((o, i) => o[i], data);
+      }
+    );
 
     text = text.replace(/{cal\((.*?)\)}/g, (match, expression) => {
       try {
         const result = eval(expression);
         return result;
       } catch (error) {
-        console.error('Invalid expression:', expression);
+        console.error("Invalid expression:", expression);
         return match; // Return the original placeholder if there's an error in the expression
       }
     });
 
-    if (/{([a-zA-Z0-9_ ]+(?:->[a-zA-Z0-9_ ]+)*)}/g.test(text)) return replaceData({ text, data });
+    if (/{([a-zA-Z0-9_ ]+(?:->[a-zA-Z0-9_ ]+)*)}/g.test(text))
+      return replaceData({ text, data });
   } catch (e) {
     console.log(e);
   }
@@ -32,18 +37,31 @@ const replaceData = ({ text, data }) => {
   return text;
 };
 
-const getTranslatedMessage = (arr, language) => {
-  let result = { message: '', language: 'en' };
+const getTranslatedMessage = (contents, language) => {
+  let result = { message: "", language: "en" };
 
-  if (!Array.isArray(arr)) return result;
+  const arrLang = ['en', 'vi'];
 
-  result = arr.find((t) => t.language == language);
+  if (contents[language]) {
+    result = {
+      message: contents[language].message,
+      type: contents[language].type,
+      language: language,
+    };
+  } else {
+    language = arrLang.some(x => x != language);
+    result = {
+      message: contents[language].message,
+      type: contents[language].type,
+      language: language,
+    };
+  }
 
-  return result || arr.find((t) => t.language, 'en') || { message: '', language: 'en' };
+  return result;
 };
 
 const accessProp = (path, object) => {
-  return path.split('->').reduce((o, i) => o[i], object);
+  return path.split("->").reduce((o, i) => o[i], object);
 };
 
 const replaceObjWithParam = (conversationData, obj) => {
@@ -53,9 +71,13 @@ const replaceObjWithParam = (conversationData, obj) => {
 
   try {
     for (let key of arr) {
-      if (obj[key] && typeof obj[key] == 'string' && obj[key].match(/^{[\w->]+}$/)) {
-        obj[key] = accessProp(obj[key].replace(/{|}/g, ''), conversationData);
-      } else if (obj[key] && typeof obj[key] == 'string') {
+      if (
+        obj[key] &&
+        typeof obj[key] == "string" &&
+        obj[key].match(/^{[\w->]+}$/)
+      ) {
+        obj[key] = accessProp(obj[key].replace(/{|}/g, ""), conversationData);
+      } else if (obj[key] && typeof obj[key] == "string") {
         obj[key] = replaceData({ text: obj[key], data: conversationData });
       }
     }
@@ -68,7 +90,7 @@ const replaceObjWithParam = (conversationData, obj) => {
 
 const formatMSGTemplate = ({ type, conversationData, extend }) => {
   let result = {
-    type: 'template',
+    type: "template",
     channelData: { type },
   };
 
@@ -81,7 +103,9 @@ const formatMSGTemplate = ({ type, conversationData, extend }) => {
 
     let { buttons } = tp;
 
-    rs.buttons = buttons.map((b) => replaceObjWithParam(conversationData.data, b));
+    rs.buttons = buttons.map((b) =>
+      replaceObjWithParam(conversationData.data, b)
+    );
 
     data.push(rs);
   }
@@ -98,26 +122,33 @@ const formatReceipt = ({ extend, conversationData }) => {
 
   extend.address = replaceObjWithParam(conversationData.data, extend.address);
 
-  extend.elements = (extend.elements && extend.elements.map((e) => replaceObjWithParam(conversationData.data, e))) || [];
+  extend.elements =
+    (extend.elements &&
+      extend.elements.map((e) =>
+        replaceObjWithParam(conversationData.data, e)
+      )) ||
+    [];
 
   extend.summary = replaceObjWithParam(conversationData.data, extend.summary);
 
-  return { type: 'receipt', channelData: { ...extend } };
+  return { type: "receipt", channelData: { ...extend } };
 };
 
 const formatMessage = ({ text, type, extend, conversationData }) => {
   if (!conversationData) return;
 
-  if (!type || type == 'normal') return { type: 'message', text };
+  if (!type || type == "text") return { type: "message", text };
 
   switch (conversationData.channelId) {
-    case 'MSG':
+    case "MSG":
       const template = {
         address_template: ({ text }) => {
-          return { type: 'address_template', text, channelData: { text } };
+          return { type: "address_template", text, channelData: { text } };
         },
-        receipt: ({ conversationData, extend }) => formatReceipt({ conversationData, extend }),
-        template: ({ type, conversationData, extend }) => formatMSGTemplate({ type, conversationData, extend }),
+        receipt: ({ conversationData, extend }) =>
+          formatReceipt({ conversationData, extend }),
+        template: ({ type, conversationData, extend }) =>
+          formatMSGTemplate({ type, conversationData, extend }),
       };
 
       return template[type]({ conversationData, extend, text });
@@ -129,7 +160,7 @@ const formatMessage = ({ text, type, extend, conversationData }) => {
       break;
   }
 
-  return { type: 'message', text, channelData: { type, extend } };
+  return { type: "message", text, channelData: { type, extend } };
 };
 
 const keyValueToObject = (string) => {

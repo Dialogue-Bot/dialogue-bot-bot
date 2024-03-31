@@ -6,7 +6,7 @@ const getFlowByChannelId = async (channelId) => {
   try {
     const { data } = await axios({
       method: 'GET',
-      url: PROXY_DOMAIN + '/bot/flow/' + channelId,
+      url: PROXY_DOMAIN + '/flow/' + channelId,
     });
 
     return data;

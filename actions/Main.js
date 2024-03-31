@@ -81,33 +81,33 @@ class MainDialog extends ComponentDialog {
 
     const conversationData = await this.conversationDataAccessor.get(step.context, {});
 
-    let { flow, settings, attributes } = (await getFlowByChannelId(recipient.id)) || {};
+    let { flows, settings, variables } = (await getFlowByChannelId(recipient.id)) || {};
 
-    if (!flow) return await endConversation(step, ERROR_MESSAGE);
+    if (!flows) return await endConversation(step, ERROR_MESSAGE);
 
     try {
-      if (typeof flow == 'string') flow = JSON.parse(flow);
+      if (typeof flows == 'string') flows = JSON.parse(flows);
       if (typeof settings == 'string') settings = JSON.parse(settings);
       if (typeof attributes == 'string') attributes = keyValueToObject(attributes);
     } catch (e) {
       // console.log(e)
     }
 
-    const language = settings && settings.find((e) => e.default);
+    const language = settings && settings.find((e) => e.default && e.type === 'language');
 
     conversationData.language = (language && language.value) || 'en';
-    conversationData.flow = [flow];
-    conversationData.currentFlow = flow;
-    conversationData.data = { ...attributes };
+    conversationData.flow = [flows];
+    conversationData.currentFlow = flows;
+    conversationData.data = { ...variables };
     conversationData.sender = from.id;
     conversationData.channelId = channelId;
     conversationData.botId = recipient.id;
 
-    const firstAction = flow.find((a) => a && a.type == 'start');
+    const firstAction = flows.find((a) => a && a.action == 'start');
 
     if (!firstAction) return await step.context.sendActivity(ERROR_MESSAGE);
 
-    const nextAction = flow.find((a) => a.id == firstAction.nextAction);
+    const nextAction = flows.find((a) => a.id == firstAction.nextAction);
 
     return await step.replaceDialog('REDIRECT_FLOW', { ...nextAction });
   }
@@ -115,50 +115,51 @@ class MainDialog extends ComponentDialog {
   async RedirectFlow(step) {
     console.log('--------------------------------------------------------------------');
 
-    const { type } = step._info.options;
+    const { action } = step._info.options;
 
-    const types = {
-      message: SEND_TEXT,
-      promptandcollect: PROMPTING,
+    const actions = {
+      'message': SEND_TEXT,
+      'prompt-and-collect': PROMPTING,
       setattribute: SET_DATA,
       http: HTTP_REQUEST,
       subflow: SUB_FLOW,
       checkattribute: CHECK_VARIABLE,
     };
 
-    if (!types[type]) {
+    if (!actions[action]) {
       console.log('Can can not find next action type => end dialog');
       return await endConversation(step);
     }
 
-    return await step.beginDialog(types[type], step._info.options);
+    return await step.beginDialog(actions[action], step._info.options);
   }
 
   async CheckNextFlow(step) {
-    const { nextAction: id, answer, nextAction: actions, attribute } = step._info.options;
+    const { nextAction: id, nextActions, assignUserResponse } = step._info.options;
     const { checkAction, actionId } = step.result;
     const conversationData = await this.conversationDataAccessor.get(step.context);
 
-    const { currentFlow, flow, continueAction } = conversationData;
+    const { currentFlow, continueAction } = conversationData;
+
 
     let nextAction;
 
     if (checkAction) {
       const Case = this.GetNextAction({
-        attribute: answer || (attribute && attribute.label) || attribute,
-        actions,
+        attribute: (assignUserResponse && assignUserResponse.label) || assignUserResponse || 'answer',
+        actions: nextActions,
         data: conversationData.data,
       });
-      nextAction = currentFlow.find((a) => a.id == (Case && Case.actionId));
+      nextAction = currentFlow.find((a) => a.id == (Case && Case.id));
 
       if (nextAction && Case) {
-        console.log(`${answer} Pass case option : ${Case.case}`);
+        console.log(`Pass case option : ${Case.condition}`);
       }
 
       if (!nextAction) {
-        const OtherCase = actions.find((c) => c.case == 'other');
+        const OtherCase = nextActions.find((c) => c.condition == 'otherwise');
 
-        nextAction = currentFlow.find((a) => a.id == (OtherCase && OtherCase.actionId));
+        nextAction = currentFlow.find((a) => a.id == (OtherCase && OtherCase.id));
       }
     } else {
       nextAction = currentFlow.find((a) => a.id == (actionId || id));
@@ -183,20 +184,15 @@ class MainDialog extends ComponentDialog {
     if (!Array.isArray(actions)) return;
 
     const checkData = data[attribute];
+    
 
     for (let Case of actions) {
       if (!Case) return;
 
-      const { case: condition } = Case;
-      const options = condition && condition.split(':');
+      const { condition, value, id } = Case;
 
-      if (!options || !options.length) continue;
-
-      const option = options[0] && options[0].trim();
-      const value = options[1] && options[1].trim();
-
-      switch (option) {
-        case 'Empty':
+      switch (condition) {
+        case 'empty':
           if (typeof checkData == 'object') {
             if (value == 'true' && !Object.keys(checkData).length) return Case;
             if (value == 'false' && Object.keys(checkData).length) return Case;
@@ -205,11 +201,11 @@ class MainDialog extends ComponentDialog {
             return Case;
           }
           continue;
-        case 'Equal':
+        case 'equal':
           if (checkData == value) return Case;
           if (typeof checkData == 'string' && checkData.toLocaleLowerCase() == value.toLocaleLowerCase()) return Case;
           continue;
-        case 'Not equal':
+        case 'not equal':
           if (checkData != value) return Case;
           continue;
         case 'Is less than':
