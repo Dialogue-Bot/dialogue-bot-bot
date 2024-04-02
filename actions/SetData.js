@@ -12,7 +12,7 @@ class SetData extends ComponentDialog {
   }
 
   async SetAttribute(step) {
-    const { name, data, nextAction } = step._info.options;
+    const { name, data, nextActions } = step._info.options;
 
     console.log(`[SetAttribute] Action ${name}`);
 
@@ -20,7 +20,7 @@ class SetData extends ComponentDialog {
 
     conversationData.data = { ...conversationData.data, ...data };
 
-    return await step.endDialog({ nextAction });
+    return await step.endDialog({ nextActions });
   }
 }
 

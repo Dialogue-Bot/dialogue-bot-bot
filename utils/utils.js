@@ -11,12 +11,11 @@ const replaceData = ({ text, data }) => {
   if (!data || !text) return text;
 
   try {
-    text = text.replace(
-      /{([a-zA-Z0-9_ ]+(?:->[a-zA-Z0-9_ ]+)*)}/g,
-      (match, key) => {
-        return key.split("->").reduce((o, i) => o[i], data);
-      }
-    );
+    text = text.replace(/{([a-zA-Z0-9_ ]+(?:->[a-zA-Z0-9_ ]+)*)}/g, (match, key) => {
+      const keys = key.split("->");
+      let value = data.find(item => item.name === keys[0]);
+      return keys.slice(1).reduce((acc, curr) => (value ? value = value[curr] : undefined), value);
+    });
 
     text = text.replace(/{cal\((.*?)\)}/g, (match, expression) => {
       try {
@@ -30,6 +29,7 @@ const replaceData = ({ text, data }) => {
 
     if (/{([a-zA-Z0-9_ ]+(?:->[a-zA-Z0-9_ ]+)*)}/g.test(text))
       return replaceData({ text, data });
+    return text;
   } catch (e) {
     console.log(e);
   }
@@ -40,7 +40,7 @@ const replaceData = ({ text, data }) => {
 const getTranslatedMessage = (contents, language) => {
   let result = { message: "", language: "en" };
 
-  const arrLang = ['en', 'vi'];
+  const arrLang = ["en", "vi"];
 
   if (contents[language]) {
     result = {
@@ -49,7 +49,7 @@ const getTranslatedMessage = (contents, language) => {
       language: language,
     };
   } else {
-    language = arrLang.some(x => x != language);
+    language = arrLang.some((x) => x != language);
     result = {
       message: contents[language].message,
       type: contents[language].type,

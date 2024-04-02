@@ -13,6 +13,7 @@ const { translate } = require("../services/translate");
 const { default: axios } = require("axios");
 const { predict } = require("../services/intent");
 const { PROXY_DOMAIN } = process.env;
+const { ERROR_MESSAGE } = process.env;
 
 const PROMPTING_WATERFALL = "PROMPTING_WATERFALL";
 const ASK = "ASK";
@@ -41,8 +42,6 @@ class Prompting extends ComponentDialog {
       repeat,
       retry,
       nextActions,
-      notmatchprompts,
-      prompt_type,
       extend,
     } = step._info.options;
 
@@ -57,11 +56,21 @@ class Prompting extends ComponentDialog {
     if (retry) {
       if (repeat <= 0) {
         const nextId =
-          nextActions && nextActions.find((e) => e.case == "Not match");
-        return await step.endDialog({ actionId: nextId && nextId.actionId });
+          nextActions && nextActions.find((e) => e.condition == "otherwise");
+        return await step.endDialog({ actionId: nextId && nextId.id });
       }
 
-      let notMatchMsg = getTranslatedMessage(notmatchprompts, language);
+      // let notMatchMsg = getTranslatedMessage(contents, language);
+
+      // notMatchMsg.message = replaceData({ text: notMatchMsg.message, data });
+      const errMsg = {
+        en: {
+          message: ERROR_MESSAGE,
+          type: 'text',
+        }
+      }
+
+      let notMatchMsg = getTranslatedMessage(errMsg, language);
 
       if (notMatchMsg) {
         await step.context.sendActivity(
@@ -96,17 +105,15 @@ class Prompting extends ComponentDialog {
     const conversationData = await this.dialog.conversationDataAccessor.get(
       step.context
     );
+    let answer = { name: 'answer', value: step.result, type: 'string'};
 
-    // store user response to conversation data
-    conversationData.data.answer = step.result;
-    // if (answer) {
-    //   // store user response to conversation data
-    //   conversationData.data[answer] = step.result;
-    // }
+    //check answer
+    conversationData.data = conversationData.data.filter(x => x.name !== 'answer');
+    conversationData.data.push(answer);
 
-    if (!["yes-no", "number", "email", "phonenumber"].includes(grammarType)) {
+    if (!["yes-no", "number", "email", "phone-number", "number"].includes(grammarType)) {
       console.log(`Validate type : ${grammarType} => go check for user response`);
-      return await step.endDialog({ checkAction: true, actionId: id });
+      return await step.endDialog({ checkAction: true});
     }
 
     const userIntent = await this.validateBuiltin(
@@ -124,9 +131,13 @@ class Prompting extends ComponentDialog {
     }
 
     // conversationData.data[answer] = userIntent;
-    conversationData.data.answer = userIntent;
+    conversationData.data = conversationData.data.map(d => 
+      d.name = 'answer' &&
+      { name: 'answer', value: userIntent, type: 'string'} ||
+      d
+    );
 
-    return await step.endDialog({ checkAction: true, actionId: id });
+    return await step.endDialog({ checkAction: true});
   }
 
   async IntentValidate(step) {
