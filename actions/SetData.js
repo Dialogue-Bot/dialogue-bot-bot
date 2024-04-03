@@ -18,7 +18,7 @@ class SetData extends ComponentDialog {
 
     const conversationData = await this.dialog.conversationDataAccessor.get(step.context);
 
-    conversationData.data = { ...conversationData.data, ...data };
+    conversationData.variables = { ...conversationData.variables, ...data };
 
     return await step.endDialog({ nextActions });
   }

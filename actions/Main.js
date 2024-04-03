@@ -77,8 +77,8 @@ class MainDialog extends ComponentDialog {
 
     if (!conversationData) return await next();
 
-    conversationData.data = {
-      ...conversationData.data,
+    conversationData.variables = {
+      ...conversationData.variables,
       ...((typeof context.activity.data == "object" && context.activity.data) ||
         {}),
     };
@@ -127,7 +127,7 @@ class MainDialog extends ComponentDialog {
     conversationData.language = (language && language.value) || "en";
     conversationData.flow = [flows];
     conversationData.currentFlow = flows;
-    conversationData.data = variables;
+    conversationData.variables = variables;
     conversationData.sender = from.id;
     conversationData.channelId = channelId;
     conversationData.botId = recipient.id;
@@ -152,8 +152,8 @@ class MainDialog extends ComponentDialog {
       message: SEND_TEXT,
       "prompt-and-collect": PROMPTING,
       setattribute: SET_DATA,
-      http: HTTP_REQUEST,
-      subflow: SUB_FLOW,
+      "http-request": HTTP_REQUEST,
+      "sub-flow": SUB_FLOW,
       "check-variables": CHECK_VARIABLE,
     };
 
@@ -179,11 +179,11 @@ class MainDialog extends ComponentDialog {
     const { currentFlow, continueAction } = conversationData;
     
     if (assignUserResponse) {
-      let findVar = conversationData.data.find(
+      let findVar = conversationData.variables.find(
         (x) => x.name === assignUserResponse
       );
       if (findVar) {
-        findVar.value = conversationData.data.find(x=> x.name === 'answer').value;
+        findVar.value = conversationData.variables.find(x=> x.name === 'answer').value;
       }
     }
 
@@ -193,7 +193,7 @@ class MainDialog extends ComponentDialog {
       const Case = this.GetNextAction({
         attribute: assignUserResponse || "answer",
         actions: nextActions,
-        data: conversationData.data,
+        data: conversationData.variables,
       });
       nextAction = currentFlow.find((a) => a.id == (Case && Case.id));
 
@@ -287,9 +287,9 @@ class MainDialog extends ComponentDialog {
           if (typeof checkData === "string" && checkData.includes(value))
             return Case;
           continue;
-        case "Exist":
-          if (value == "true" && checkData) return Case;
-          if (value == "false" && !checkData) return Case;
+        case "exist":
+          if (value && checkData) return Case;
+          if (!value && !checkData) return Case;
           continue;
         default:
           continue;

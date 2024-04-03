@@ -14,7 +14,7 @@ const replaceData = ({ text, data }) => {
     text = text.replace(/{([a-zA-Z0-9_ ]+(?:->[a-zA-Z0-9_ ]+)*)}/g, (match, key) => {
       const keys = key.split("->");
       let value = data.find(item => item.name === keys[0]);
-      return keys.slice(1).reduce((acc, curr) => (value ? value = value[curr] : undefined), value);
+      return keys.slice(1).reduce((acc, curr) => (value ? value = value[curr] : undefined), value) || undefined;
     });
 
     text = text.replace(/{cal\((.*?)\)}/g, (match, expression) => {
@@ -37,21 +37,21 @@ const replaceData = ({ text, data }) => {
   return text;
 };
 
-const getTranslatedMessage = (contents, language) => {
+const getTranslatedMessage = (contents, language, error) => {
   let result = { message: "", language: "en" };
 
   const arrLang = ["en", "vi"];
 
   if (contents[language]) {
     result = {
-      message: contents[language].message,
+      message: error ? contents[language].repeatMessage : contents[language].message,
       type: contents[language].type,
       language: language,
     };
   } else {
     language = arrLang.some((x) => x != language);
     result = {
-      message: contents[language].message,
+      message: error ? contents[language].repeatMessage : contents[language].message,
       type: contents[language].type,
       language: language,
     };
@@ -99,12 +99,12 @@ const formatMSGTemplate = ({ type, conversationData, extend }) => {
   if (!Array.isArray(extend)) return console.log(`Invalid format`);
 
   for (let tp of extend) {
-    let rs = replaceObjWithParam(conversationData.data, tp);
+    let rs = replaceObjWithParam(conversationData.variables, tp);
 
     let { buttons } = tp;
 
     rs.buttons = buttons.map((b) =>
-      replaceObjWithParam(conversationData.data, b)
+      replaceObjWithParam(conversationData.variables, b)
     );
 
     data.push(rs);
@@ -118,18 +118,18 @@ const formatMSGTemplate = ({ type, conversationData, extend }) => {
 const formatReceipt = ({ extend, conversationData }) => {
   if (!extend) return {};
 
-  extend = replaceObjWithParam(conversationData.data, extend);
+  extend = replaceObjWithParam(conversationData.variables, extend);
 
-  extend.address = replaceObjWithParam(conversationData.data, extend.address);
+  extend.address = replaceObjWithParam(conversationData.variables, extend.address);
 
   extend.elements =
     (extend.elements &&
       extend.elements.map((e) =>
-        replaceObjWithParam(conversationData.data, e)
+        replaceObjWithParam(conversationData.variables, e)
       )) ||
     [];
 
-  extend.summary = replaceObjWithParam(conversationData.data, extend.summary);
+  extend.summary = replaceObjWithParam(conversationData.variables, extend.summary);
 
   return { type: "receipt", channelData: { ...extend } };
 };

@@ -21,17 +21,17 @@ class HttpRequest extends ComponentDialog {
     try {
       let config = {
         method: (method && method.toUpperCase()) || 'GET',
-        url: replaceData({ text: url, data: conversationData.data }),
-        data: replaceObjWithParam(conversationData.data, keyValueToObject(body) || {}),
-        headers: replaceObjWithParam(conversationData.data, keyValueToObject(headers) || {}),
-        params: replaceObjWithParam(conversationData.data, keyValueToObject(params) || {}),
+        url: replaceData({ text: url, data: conversationData.variables }),
+        data: replaceObjWithParam(conversationData.variables, keyValueToObject(body) || {}),
+        headers: replaceObjWithParam(conversationData.variables, keyValueToObject(headers) || {}),
+        params: replaceObjWithParam(conversationData.variables, keyValueToObject(params) || {}),
       };
 
       console.log(`[HTTP] ${name} ${JSON.stringify(config)}`);
 
       const { data } = await axios(config);
 
-      if (response) conversationData.data[response] = data;
+      if (response) conversationData.variables[response] = data;
     } catch (e) {
       console.log(`[HTTP] HTTP request failed`, e.message);
       const nextId = nextAction.find((c) => c.case == 'failed');

@@ -24,7 +24,7 @@ class SendText extends ComponentDialog {
     let msg = getTranslatedMessage(contents, language);
 
     if (msg.message) {
-      msg.message = replaceData({ text: msg.message, data: conversationData.data });
+      msg.message = replaceData({ text: msg.message, data: conversationData.variables });
     }
 
     msg = formatMessage({ text: (msg && msg.message) || '', conversationData, type: msg.type, extend });

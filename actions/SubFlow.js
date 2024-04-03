@@ -36,7 +36,7 @@ class SubFlow extends ComponentDialog {
       flows.unshift(flow);
     }
 
-    conversationData.data = { ...data, ...(attributes ? attributes : {}) };
+    conversationData.variables = { ...data, ...(attributes ? attributes : {}) };
     conversationData.currentFlow = flow;
     conversationData.continueAction = nextAction;
 
