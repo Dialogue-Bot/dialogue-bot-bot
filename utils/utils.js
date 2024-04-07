@@ -11,11 +11,21 @@ const replaceData = ({ text, data }) => {
   if (!data || !text) return text;
 
   try {
-    text = text.replace(/{([a-zA-Z0-9_ ]+(?:->[a-zA-Z0-9_ ]+)*)}/g, (match, key) => {
-      const keys = key.split("->");
-      let value = data.find(item => item.name === keys[0]);
-      return keys.slice(1).reduce((acc, curr) => (value ? value = value[curr] : undefined), value) || undefined;
-    });
+    text = text.replace(
+      /{([a-zA-Z0-9_ ]+(?:->[a-zA-Z0-9_ ]+)*)}/g,
+      (match, key) => {
+        const keys = key.split("->");
+        let value = data.find((item) => item.name === keys[0]);
+        return (
+          keys
+            .slice(1)
+            .reduce(
+              (acc, curr) => (value ? (value = value[curr]) : undefined),
+              value
+            ) || undefined
+        );
+      }
+    );
 
     text = text.replace(/{cal\((.*?)\)}/g, (match, expression) => {
       try {
@@ -38,24 +48,119 @@ const replaceData = ({ text, data }) => {
 };
 
 const getTranslatedMessage = (contents, language, error) => {
-  let result = { message: "", language: "en" };
+  let result = { message: "", language: "en", type: "text" };
 
   const arrLang = ["en", "vi"];
 
-  if (contents[language]) {
-    result = {
-      message: error ? contents[language].repeatMessage : contents[language].message,
-      type: contents[language].type,
-      language: language,
-    };
-  } else {
-    language = arrLang.some((x) => x != language);
-    result = {
-      message: error ? contents[language].repeatMessage : contents[language].message,
-      type: contents[language].type,
-      language: language,
-    };
+  let data = contents[language];
+  if (!data) {
+    language = arrLang.find((x) => x != language);
+    data = contents[language];
   }
+
+  if (data) {
+    result.message = error ? data.repeatMessage : data.message;
+    result.language = language;
+    // result = {
+    //   message: error ? data.repeatMessage : data.message,
+    //   type: data.type || "text",
+    //   language: language,
+    // };
+  }
+  return result;
+};
+
+const detectContentsLanguage = (contents, language) => {
+  const arrLang = ["en", "vi"];
+
+  let data = contents[language];
+  if (!data) {
+    language = arrLang.find((x) => x != language);
+    data = contents[language];
+  }
+  return data;
+}
+
+const getExtendTypeMessage = (contents, language, channelId) => {
+  let result = { data: "", language: "en" };
+
+  contents = detectContentsLanguage(contents, language);
+
+  if (channelId === "MSG" || channelId === "WEB") {
+    if (contents.buttons && contents.buttons.length) {
+      result = {
+        data: formatButtons(contents.buttons) || [],
+        type: 'list-button',
+        language,
+      };
+    }
+    if (contents.cards && contents.cards.length) {
+      result = {
+        data: formatButtons(contents.cards) || [],
+        type: 'list-card',
+        language,
+      };
+    }
+    // switch (contents[language]?.type) {
+    //   case "list-button":
+    //     result = {
+    //       data: contents[language].buttons
+    //         ? formatButtons(contents[language].buttons)
+    //         : [],
+    //       type: contents[language].type,
+    //       language,
+    //     };
+    //     break;
+    //   case "list-card":
+    //     result = {
+    //       data: contents[language].cards
+    //         ? formatCards(contents[language].cards)
+    //         : [],
+    //       type: contents[language].type,
+    //       language,
+    //     };
+    //     break;
+    //   default:
+    //     break;
+    // }
+  }
+
+  return result;
+};
+
+const formatCards = (cards) => {
+  let result = [];
+  if (!Array.isArray(cards)) return result;
+
+  cards.forEach((d) => {
+    const card = {
+      title: d.title,
+      image_url: d.imageUrl,
+      subtitle: d.subtitle,
+    };
+    const buttons = d.buttons && formatButtons(d.buttons);
+    if (buttons.length) card.buttons = buttons;
+    result.push(card);
+  });
+  return result;
+};
+
+const formatButtons = (buttons) => {
+  let result = [];
+  if (!Array.isArray(buttons)) return result;
+
+  buttons.forEach((b) => {
+    switch (b.type) {
+      case "url":
+        result.push({ type: "web_url", url: b.value, title: b.label });
+        break;
+      case "postback":
+        result.push({ type: "postback", payload: b.value, title: b.label });
+        break;
+      default:
+        break;
+    }
+  });
 
   return result;
 };
@@ -120,7 +225,10 @@ const formatReceipt = ({ extend, conversationData }) => {
 
   extend = replaceObjWithParam(conversationData.variables, extend);
 
-  extend.address = replaceObjWithParam(conversationData.variables, extend.address);
+  extend.address = replaceObjWithParam(
+    conversationData.variables,
+    extend.address
+  );
 
   extend.elements =
     (extend.elements &&
@@ -129,7 +237,10 @@ const formatReceipt = ({ extend, conversationData }) => {
       )) ||
     [];
 
-  extend.summary = replaceObjWithParam(conversationData.variables, extend.summary);
+  extend.summary = replaceObjWithParam(
+    conversationData.variables,
+    extend.summary
+  );
 
   return { type: "receipt", channelData: { ...extend } };
 };
@@ -137,7 +248,7 @@ const formatReceipt = ({ extend, conversationData }) => {
 const formatMessage = ({ text, type, extend, conversationData }) => {
   if (!conversationData) return;
 
-  if (!type || type == "text") return { type: "message", text };
+  if (!type || type === "text") return { type: "message", text };
 
   switch (conversationData.channelId) {
     case "MSG":
@@ -145,10 +256,10 @@ const formatMessage = ({ text, type, extend, conversationData }) => {
         address_template: ({ text }) => {
           return { type: "address_template", text, channelData: { text } };
         },
-        receipt: ({ conversationData, extend }) =>
-          formatReceipt({ conversationData, extend }),
-        template: ({ type, conversationData, extend }) =>
-          formatMSGTemplate({ type, conversationData, extend }),
+        receipt: ({ conversationData, contents }) =>
+          formatReceipt({ conversationData, contents }),
+        template: ({ type, conversationData, contents }) =>
+          formatMSGTemplate({ type, conversationData, contents }),
       };
 
       return template[type]({ conversationData, extend, text });
@@ -185,6 +296,7 @@ const keyValueToObject = (string) => {
 module.exports = {
   endConversation,
   getTranslatedMessage,
+  getExtendTypeMessage,
   replaceData,
   replaceObjWithParam,
   formatMessage,

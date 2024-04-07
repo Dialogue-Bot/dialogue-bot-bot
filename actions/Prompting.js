@@ -68,7 +68,7 @@ class Prompting extends ComponentDialog {
     msg.message = replaceData({ text: msg.message, data });
 
     if (msg.language != language) {
-      msg.message = await translate(msg.message, message.language, language);
+      msg.message = await translate(msg.message, msg.language, language);
     }
 
     msg = formatMessage({

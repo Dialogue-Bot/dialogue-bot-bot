@@ -28,7 +28,7 @@ class DialogBot extends ActivityHandler {
         context.onSendActivities(async (ctx, activities, next) => {
           const modifiedActivities = activities.map(async (activity) => {
             if (activity.type === ActivityTypes.Message) {
-              console.log(`Bot sent message: ${activity.text}`);
+              console.log(`Bot sent message: ${activity.text || JSON.stringify(activity.channelData)}`);
             }
           });
 
