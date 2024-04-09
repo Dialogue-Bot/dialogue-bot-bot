@@ -99,7 +99,7 @@ class MainDialog extends ComponentDialog {
 
   // get the chat flow step
   async ReadFlow(step) {
-    const { recipient, from, channelId } = step.context.activity;
+    const { recipient, from, channelId, testBot } = step.context.activity;
     const { ERROR_MESSAGE } = process.env;
 
     const conversationData = await this.conversationDataAccessor.get(
@@ -108,7 +108,7 @@ class MainDialog extends ComponentDialog {
     );
 
     let { flows, settings, variables } =
-      (await getFlowByChannelId(recipient.id)) || {};
+      (await getFlowByChannelId(recipient.id, testBot)) || {};
 
     if (!flows) return await endConversation(step, ERROR_MESSAGE);
 

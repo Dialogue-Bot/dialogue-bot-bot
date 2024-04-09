@@ -1,12 +1,13 @@
-const axios = require('axios');
+const axios = require("axios");
 
 const { PROXY_DOMAIN } = process.env;
 
-const getFlowByChannelId = async (channelId) => {
+const getFlowByChannelId = async (channelId, testBot) => {
   try {
     const { data } = await axios({
-      method: 'GET',
-      url: PROXY_DOMAIN + '/flow/' + channelId,
+      method: "GET",
+      url: PROXY_DOMAIN + "/flow/" + channelId,
+      data: { isTest: testBot ?? false },
     });
 
     return data;
@@ -18,8 +19,8 @@ const getFlowByChannelId = async (channelId) => {
 const getFlowById = async (id) => {
   try {
     const { data } = await axios({
-      method: 'GET',
-      url: PROXY_DOMAIN + '/bot/flow/id/' + id,
+      method: "GET",
+      url: PROXY_DOMAIN + "/bot/flow/id/" + id,
     });
 
     if (data) {
