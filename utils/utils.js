@@ -96,33 +96,11 @@ const getExtendTypeMessage = (contents, language, channelId) => {
     }
     if (contents.cards && contents.cards.length) {
       result = {
-        data: formatButtons(contents.cards) || [],
+        data: formatCards(contents.cards) || [],
         type: 'list-card',
         language,
       };
     }
-    // switch (contents[language]?.type) {
-    //   case "list-button":
-    //     result = {
-    //       data: contents[language].buttons
-    //         ? formatButtons(contents[language].buttons)
-    //         : [],
-    //       type: contents[language].type,
-    //       language,
-    //     };
-    //     break;
-    //   case "list-card":
-    //     result = {
-    //       data: contents[language].cards
-    //         ? formatCards(contents[language].cards)
-    //         : [],
-    //       type: contents[language].type,
-    //       language,
-    //     };
-    //     break;
-    //   default:
-    //     break;
-    // }
   }
 
   return result;
