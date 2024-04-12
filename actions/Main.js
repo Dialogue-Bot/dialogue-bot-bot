@@ -33,7 +33,7 @@ class MainDialog extends ComponentDialog {
     this.adapter = adapter;
     this.conversationState = conversationState;
     this.conversationDataAccessor =
-      this.conversationState.createProperty("conversationData");
+    this.conversationState.createProperty("conversationData");
     this.dialogState = conversationState.createProperty("DialogState");
     this.dialogSet = new DialogSet(this.dialogState);
     // this.dialogSet = new DialogSet(this.conversationDataAccessor);
@@ -182,9 +182,11 @@ class MainDialog extends ComponentDialog {
       let findVar = conversationData.variables.find(
         (x) => x.name === assignUserResponse
       );
+      const value = conversationData.variables.find(x=> x.name === 'answer').value;
       if (findVar) {
-        findVar.value = conversationData.variables.find(x=> x.name === 'answer').value;
+        findVar.value = value;
       }
+      if(conversationData[assignUserResponse]) conversationData[assignUserResponse] = value;
     }
 
     let nextAction;
@@ -192,7 +194,7 @@ class MainDialog extends ComponentDialog {
     if (checkAction) {
       const Case = this.GetNextAction({
         attribute: assignUserResponse || "answer",
-        actions: nextActions,
+        actions: nextActions || [],
         data: conversationData.variables,
       });
       nextAction = currentFlow.find((a) => a.id == (Case && Case.id));
@@ -202,7 +204,7 @@ class MainDialog extends ComponentDialog {
       }
 
       if (!nextAction) {
-        const OtherCase = nextActions.find((c) => c.condition == "otherwise");
+        const OtherCase = nextActions && nextActions.find((c) => c.condition == "otherwise");
 
         nextAction = currentFlow.find(
           (a) => a.id == (OtherCase && OtherCase.id)

@@ -2,6 +2,7 @@ const { ComponentDialog, WaterfallDialog } = require('botbuilder-dialogs');
 const { SEND_TEXT } = require('../Constant');
 const { getTranslatedMessage, replaceData, formatMessage, getExtendTypeMessage } = require('../utils/utils');
 const { translate } = require('../services/translate');
+const { ERROR_MESSAGE } = process.env;
 
 const SENDTEXT_WATERFALL = 'SENDTEXT_WATERFALL';
 
@@ -14,7 +15,7 @@ class SendText extends ComponentDialog {
   }
 
   async SendTextAction(step) {
-    const { name, nextAction, prompt_type, extend, buttons, contents } = step._info.options;
+    const { name, nextAction, prompt_type, extend, contents } = step._info.options;
 
     console.log(`[SendMessage] ${name}`);
 
@@ -28,7 +29,6 @@ class SendText extends ComponentDialog {
       msg.message = replaceData({ text: msg.message, data: conversationData.variables });
     }
 
-    
     // translate
     msg.message = await translate(msg.message, msg.language, language);
     
@@ -43,6 +43,8 @@ class SendText extends ComponentDialog {
 
       msg.channelData.type = extendType.type;
     }
+
+    if(!msg.message && !extendType) msg.text = ERROR_MESSAGE;
 
     await step.context.sendActivity(msg);
 
