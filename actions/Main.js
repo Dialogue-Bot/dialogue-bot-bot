@@ -86,6 +86,32 @@ class MainDialog extends ComponentDialog {
     return await next();
   }
 
+  async handleEvent(context) {
+    const { activity } = context;
+    try {
+      switch (activity.typeName) {
+        case 'endConversation':
+          await this.handleEventEndConversation(context);
+          break;
+        default:
+          break;
+      }
+    } catch (e) {
+      console.error(`Handle event ${context.activity.name} error : ${e.message}`);
+      console.error(e.stack);
+    }
+  }
+
+  async handleEventEndConversation(turnContext) {
+    const dialogContext = await this.dialogSet.createContext(turnContext);
+
+    if (turnContext.activity.typeName == 'endConversation') {
+
+      console.log(`[Main] - Run function - handel ${turnContext.activity.typeName} event => end conv`);
+      return await endConversation(dialogContext);
+    }
+  }
+
   async sendTypingIndicator(turnContext, isTyping) {
     const { context } = turnContext;
     const eventActivity = {
@@ -131,6 +157,7 @@ class MainDialog extends ComponentDialog {
     conversationData.sender = from.id;
     conversationData.channelId = channelId;
     conversationData.botId = recipient.id;
+    conversationData.testBot = testBot || false;
 
     const firstAction = flows.find((a) => a && a.action == "start");
 
@@ -151,7 +178,6 @@ class MainDialog extends ComponentDialog {
     const actions = {
       message: SEND_TEXT,
       "prompt-and-collect": PROMPTING,
-      setattribute: SET_DATA,
       "http-request": HTTP_REQUEST,
       "sub-flow": SUB_FLOW,
       "check-variables": CHECK_VARIABLE,
@@ -182,11 +208,11 @@ class MainDialog extends ComponentDialog {
       let findVar = conversationData.variables.find(
         (x) => x.name === assignUserResponse
       );
-      const value = conversationData.variables.find(x=> x.name === 'answer').value;
-      if (findVar) {
+      const value = conversationData.variables.find(x=> x.name === 'answer')?.value;
+      if (findVar && value) {
         findVar.value = value;
       }
-      if(conversationData[assignUserResponse]) conversationData[assignUserResponse] = value;
+      if(assignUserResponse === 'language' && ['en', 'vi'].includes(value)) conversationData[assignUserResponse] = value;
     }
 
     let nextAction;

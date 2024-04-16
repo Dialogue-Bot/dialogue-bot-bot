@@ -16,12 +16,11 @@ class DialogBot extends ActivityHandler {
     this.conversationState = conversationState;
     this.dialogState = this.conversationState.createProperty('DialogState');
 
-    // this.onEvent(async (context, next) => {
-    //   if (context.activity.name == 'payload') {
-    //     await this.dialog.savePayload(context);
-    //   }
-    //   await next();
-    // });
+    this.onEvent(async (context, next) => {
+      console.log(`Receive event from ${context.activity.from.id} - ${context.activity.typeName}`);
+      await this.dialog.handleEvent(context);
+      await next();
+    });
 
     this.onTurn(async (context, next) => {
       try {
@@ -30,6 +29,7 @@ class DialogBot extends ActivityHandler {
             if (activity.type === ActivityTypes.Message) {
               console.log(`Bot sent message: ${activity.text || JSON.stringify(activity.channelData)}`);
             }
+
           });
 
           if (!ctx.responded && ctx.activity.type === ActivityTypes.Message) {
@@ -61,6 +61,9 @@ class DialogBot extends ActivityHandler {
     await super.run(context);
 
     // Save any state changes. The load happened during the execution of the Dialog.
+    if (context.activity.type === 'endOfConversation'){
+      await mainDialog.endOfConversation(context);
+    }
     await this.conversationState.saveChanges(context, false);
     await this.userState.saveChanges(context, false);
   }

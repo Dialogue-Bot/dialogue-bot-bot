@@ -4,11 +4,12 @@ const { PROXY_DOMAIN } = process.env;
 
 const getFlowByChannelId = async (channelId, testBot) => {
   try {
-    const { data } = await axios({
+    const config = {
       method: "GET",
       url: PROXY_DOMAIN + "/flow/" + channelId,
       data: { isTest: testBot ?? false },
-    });
+    }
+    const { data } = await axios(config);
 
     return data;
   } catch (e) {
@@ -16,16 +17,17 @@ const getFlowByChannelId = async (channelId, testBot) => {
   }
 };
 
-const getFlowById = async (id) => {
+const getFlowById = async (id, testBot) => {
   try {
-    const { data } = await axios({
+    const config = {
       method: "GET",
-      url: PROXY_DOMAIN + "/bot/flow/id/" + id,
-    });
-
-    if (data) {
-      return data.data;
+      url: PROXY_DOMAIN + "/bot/flow/" + id,
+      data: { isTest: testBot ?? false },
     }
+
+    const { data } = await axios(config);
+
+    return data;
   } catch (e) {
     console.log(`Can not get flow!`, e.message);
   }

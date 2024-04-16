@@ -3,7 +3,7 @@ const { default: axios } = require('axios');
 const predict = async (prompt, refId) => {
   console.log({
     method: 'POST',
-    url: process.env.PROXY_DOMAIN + '/bot/predict',
+    url: process.env.PROXY_DOMAIN + '/intent/predict',
     data: {
       text: prompt,
       refId: refId,
@@ -13,10 +13,10 @@ const predict = async (prompt, refId) => {
   try {
     const { data } = await axios({
       method: 'POST',
-      url: process.env.PROXY_DOMAIN + '/bot/predict',
+      url: process.env.PROXY_DOMAIN + '/intent/predict',
       data: {
         text: prompt,
-        refId: refId,
+        referenceId: refId,
       },
     });
 

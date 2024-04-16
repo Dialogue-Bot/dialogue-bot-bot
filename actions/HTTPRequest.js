@@ -14,13 +14,14 @@ class HttpRequest extends ComponentDialog {
   }
 
   async HttpRequest(step) {
-    const { name, method, url, body, headers, params, response, nextAction, 'body-type': bodyType } = step._info.options;
+    const { id, name, assignUserResponse, httpRequest, nextAction } = step._info.options;
+    const {url, method, body, headers, params, query} = httpRequest;
 
     const conversationData = await this.dialog.conversationDataAccessor.get(step.context);
 
     try {
       let config = {
-        method: (method && method.toUpperCase()) || 'GET',
+        method: method,
         url: replaceData({ text: url, data: conversationData.variables }),
         data: replaceObjWithParam(conversationData.variables, keyValueToObject(body) || {}),
         headers: replaceObjWithParam(conversationData.variables, keyValueToObject(headers) || {}),
@@ -31,15 +32,21 @@ class HttpRequest extends ComponentDialog {
 
       const { data } = await axios(config);
 
-      if (response) conversationData.variables[response] = data;
+      if (assignUserResponse) {
+        conversationData.variables = conversationData.variables.map((d) =>
+          d.name === assignUserResponse
+            ? { name: assignUserResponse, value: data, type: typeof data }
+            : d
+        );
+      }
     } catch (e) {
       console.log(`[HTTP] HTTP request failed`, e.message);
       const nextId = nextAction.find((c) => c.case == 'failed');
       return await step.endDialog({ actionId: nextId && nextId.actionId });
     }
 
-    const nextId = nextAction.find((c) => c.case == 'success');
-    return await step.endDialog({ actionId: nextId && nextId.actionId });
+    // const nextId = nextAction.find((c) => c.case == 'success');
+    return await step.endDialog({ actionId: nextAction });
   }
 }
 

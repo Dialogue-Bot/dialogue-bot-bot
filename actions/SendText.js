@@ -34,12 +34,13 @@ class SendText extends ComponentDialog {
     
     msg = formatMessage({ text: (msg && msg.message) || '', conversationData, type: msg.type, extend });
     
-    const extendType = getExtendTypeMessage(contents, language, conversationData.channelId);
+    const extendType = await getExtendTypeMessage(contents, language, conversationData.channelId);
 
     if (extendType && Array.isArray(extendType.data) && extendType.data.length) {
       msg.channelData = {};
 
-      msg.channelData['extendData'] = extendType.data;
+      // msg.channelData['extendData'] = extendType.data;      
+      msg.channelData.extendData = extendType.data;
 
       msg.channelData.type = extendType.type;
     }

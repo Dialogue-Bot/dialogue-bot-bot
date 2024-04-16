@@ -2,6 +2,7 @@ const { ComponentDialog, WaterfallDialog } = require('botbuilder-dialogs');
 const { SUB_FLOW } = require('../Constant');
 const { getTranslatedMessage, replaceData, formatMessage, keyValueToObject } = require('../utils/utils');
 const { getFlowByChannelId, getFlowById } = require('../services/proxy');
+const { ERROR_MESSAGE } = process.env;
 
 const SUB_FLOW_WATERFALL = 'SUB_FLOW_WATERFALL';
 
@@ -14,37 +15,42 @@ class SubFlow extends ComponentDialog {
   }
 
   async GetSubFlow(step) {
-    const { flowId, name, nextAction } = step._info.options;
+    let { id, name, nextAction, subFlowId } = step._info.options;
 
     console.log(`[SubFlow] ${name}`);
 
     const conversationData = await this.dialog.conversationDataAccessor.get(step.context);
 
-    const { language, data, botId, flow: flows } = conversationData;
+    const {botId, flow, testBot } = conversationData;
 
-    let { flow, settings, attributes } = (await getFlowById(flowId)) || {};
+    let { flows, settings, variables } = (await getFlowById(subFlowId, testBot)) || {};
+
+    if (!flows) return await endConversation(step, ERROR_MESSAGE);
 
     try {
-      if (typeof flow == 'string') flow = JSON.parse(flow);
+      if (typeof flows == 'string') flows = JSON.parse(flows);
       if (typeof settings == 'string') settings = JSON.parse(settings);
-      if (typeof attributes == 'string') attributes = keyValueToObject(attributes);
+      if (typeof variables == 'string') variables = keyValueToObject(variables);
     } catch (e) {
       // console.log(e)
     }
 
     if (flow && flow.length) {
-      flows.unshift(flow);
+      flow.unshift(flows);
     }
 
-    conversationData.variables = { ...data, ...(attributes ? attributes : {}) };
-    conversationData.currentFlow = flow;
+    variables = variables.filter(v => v.name !== 'language');
+    conversationData.variables = [ ...conversationData.variables, ...(variables ? variables : {}) ];
+    conversationData.currentFlow = flows;
     conversationData.continueAction = nextAction;
 
-    const firstAction = flow.find((a) => a.type == 'start');
+    const firstAction = flows.find((a) => a.action == 'start');
+    
+    if (!firstAction) return await step.context.sendActivity(ERROR_MESSAGE);
 
-    const nAction = flow.find((a) => a.id == firstAction.nextAction);
+    nextAction = flows.find((a) => a.id == firstAction.nextAction);
 
-    return await step.endDialog({ actionId: nAction.id });
+    return await step.endDialog({ actionId: nextAction.id });
   }
 }
 

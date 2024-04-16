@@ -1,3 +1,4 @@
+const { translate } = require('../services/translate');
 const endConversation = async (step, message) => {
   if (message) await step.context.sendActivity(message);
   if (step.parent && typeof step.parent.cancelAllDialogs == "function")
@@ -15,11 +16,12 @@ const replaceData = ({ text, data }) => {
       /{([a-zA-Z0-9_ ]+(?:->[a-zA-Z0-9_ ]+)*)}/g,
       (match, key) => {
         const keys = key.split("->");
-        let value = data.find((item) => item.name === keys[0]);
+        let value = data.find((item) => item.name === keys[0]).value || undefined;
+
+        if(keys.length === 1) return value;
+
         return (
-          keys
-            .slice(1)
-            .reduce(
+          keys.slice(1).reduce(
               (acc, curr) => (value ? (value = value[curr]) : undefined),
               value
             ) || undefined
@@ -61,113 +63,101 @@ const getTranslatedMessage = (contents, language, error) => {
 };
 
 const detectContentsLanguage = (contents, language) => {
-  const arrLang = ["en", "vi"];
 
-  let data = contents[language];
-  if (!data) {
-    language = arrLang.find((x) => x !== language);
-    data = contents[language];
+  if (contents[language]) {
+    return {
+      ...contents[language],
+      language,
+    };
   }
-  return data;
+
+  language = ["en", "vi"].find((x) => x !== language);
+  
+  if (contents[language]) {
+    return {
+      ...contents[language],
+      language,
+    };
+  }
+
+  return null;
+  // return contents[language] ?? (contents[arrLang.find((x) => x !== language)] ?? null);
 };
 
-const getExtendTypeMessage = (contents, language, channelId) => {
+const getExtendTypeMessage = async (contents, language, channelId) => {
   if (!Object.keys(contents).length) return;
   let result = { data: "", language: "en" };
+
+  if (!["LIN", "WEB", "MSG"].includes(channelId)) {
+    console.log(
+      "[getExtendTypeMessage] Bot does not support channel " + channelId
+    );
+    return;
+  }
 
   contents = detectContentsLanguage(contents, language);
 
   if (contents && contents.buttons && contents.buttons.length) {
     result = {
-      data: channelId === "LIN" ? formatLINEButtons(contents.buttons) : (formatButtons(contents.buttons) || []),
+      data:
+        channelId === "LIN"
+          ? formatLINEButtons(contents.buttons, contents.language, language)
+          : await formatButtons(contents.buttons, contents.language, language) || [],
       type: "list-button",
     };
   }
   if (contents && contents.cards && contents.cards.length) {
     result = {
-      data: channelId === "LIN" ? formatLINECards(contents.cards) : (formatCards(contents.cards) || []),
+      data:
+        channelId === "LIN"
+          ? formatLINECards(contents.cards, contents.language, language)
+          : await formatCards(contents.cards, contents.language, language) || [],
       type: "list-card",
     };
   }
-  // switch (channelId){
-  //   case "MSG":
-  //   case "WEB":
-  //     if (contents.buttons && contents.buttons.length) {
-  //       result = {
-  //         data: formatButtons(contents.buttons) || [],
-  //         type: 'list-button',
-  //         language,
-  //       };
-  //     }
-  //     if (contents.cards && contents.cards.length) {
-  //       result = {
-  //         data: formatCards(contents.cards) || [],
-  //         type: 'list-card',
-  //         language,
-  //       };
-  //     }
-  //     break;
-  //   case "LIN":
-  //     if (contents.buttons && contents.buttons.length) {
-  //       result = {
-  //         data: formatLINEButtons(contents.buttons) || [],
-  //         type: 'list-button',
-  //         language,
-  //       };
-  //     }
-  //     if (contents.cards && contents.cards.length) {
-  //       result = {
-  //         data: formatLINECards(contents.cards) || [],
-  //         type: 'list-card',
-  //         language,
-  //       };
-  //     }
-  //     break;
-  //   default:
-  //     break;
-  // }
 
   return result;
 };
 
-const formatCards = (cards) => {
+const formatCards = async (cards, currentLanguage, defaultLanguage) => {
   let result = [];
   if (!Array.isArray(cards)) return result;
 
-  cards.forEach((d) => {
+  for (const data of cards){
     const card = {
-      title: d.title,
-      image_url: d.imageUrl,
-      subtitle: d.subtitle,
+      title: data.title,
+      image_url: data.imageUrl,
+      subtitle: (currentLanguage !== defaultLanguage) ? await translate(data.subtitle, currentLanguage, defaultLanguage) : data.subtitle,
     };
-    const buttons = d.buttons && formatButtons(d.buttons);
+    const buttons = data.buttons && await formatButtons(data.buttons, currentLanguage, defaultLanguage);
     if (buttons.length) card.buttons = buttons;
     result.push(card);
-  });
+  };
   return result;
 };
 
-const formatButtons = (buttons) => {
+const formatButtons = async (buttons, currentLanguage, defaultLanguage) => {
   let result = [];
   if (!Array.isArray(buttons)) return result;
 
-  buttons.forEach((b) => {
-    switch (b.type) {
+  for (const button of buttons){
+    const translateLabel = (currentLanguage !== defaultLanguage) ? await translate(button.label, currentLanguage, defaultLanguage) : button.label;
+    switch (button.type) {
       case "url":
-        result.push({ type: "web_url", url: b.value, title: b.label });
+        result.push({ type: "web_url", url: button.value, title: translateLabel });
         break;
       case "postback":
-        result.push({ type: "postback", payload: b.value, title: b.label });
+        result.push({ type: "postback", payload: button.value, title: translateLabel });
         break;
       default:
         break;
     }
-  });
+  };
 
   return result;
 };
 
-const formatLINEButtons = (buttons) => {
+const formatLINEButtons = (buttons, currentLanguage, defaultLanguage) => {
   let result = [];
   if (!Array.isArray(buttons)) return result;
 
@@ -187,7 +177,7 @@ const formatLINEButtons = (buttons) => {
   return result;
 };
 
-const formatLINECards = (cards) => {
+const formatLINECards = (cards, currentLanguage, defaultLanguage) => {
   let result = [];
   if (!Array.isArray(cards)) return result;
 

@@ -37,8 +37,7 @@ class Prompting extends ComponentDialog {
   }
 
   async Ask(step) {
-    const { name, contents, repeat, retry, nextActions, extend } =
-      step._info.options;
+    const { name, contents, repeat, retry, nextActions, extend } = step._info.options;
 
     console.log(`[Prompting] ${name}`);
 
@@ -52,7 +51,11 @@ class Prompting extends ComponentDialog {
       if (repeat <= 0) {
         const nextId =
           nextActions && nextActions.find((e) => e.condition == "otherwise");
-        return await step.endDialog({ actionId: nextId && nextId.id });
+        if (nextId && nextId.id) {
+          return await step.endDialog({ actionId: nextId.id });
+        }
+        await step.context.sendActivity(ERROR_MESSAGE);
+        return await step.endDialog();
       }
 
       const notMatchMsg = getTranslatedMessage(contents, language, retry);
@@ -79,12 +82,20 @@ class Prompting extends ComponentDialog {
       conversationData,
     });
 
-    const extendType = getExtendTypeMessage(contents, language, conversationData.channelId);
+    const extendType = await getExtendTypeMessage(
+      contents,
+      language,
+      conversationData.channelId
+    );
 
-    if (extendType && Array.isArray(extendType.data) && extendType.data.length) {
+    if (
+      extendType &&
+      Array.isArray(extendType.data) &&
+      extendType.data.length
+    ) {
       msg.channelData = {};
 
-      msg.channelData['extendData'] = extendType.data;
+      msg.channelData["extendData"] = extendType.data;
 
       msg.channelData.type = extendType.type;
     }
@@ -93,7 +104,7 @@ class Prompting extends ComponentDialog {
   }
 
   async BuiltinValidate(step) {
-    const { id, grammarType, repeat } = step._info.options;
+    const { id, grammarType, repeat, trainedData } = step._info.options;
 
     if (grammarType == "intent") return await step.next(step.result);
 
@@ -143,13 +154,13 @@ class Prompting extends ComponentDialog {
   }
 
   async IntentValidate(step) {
-    const { name, text, intent, answer, refId, repeat } = step._info.options;
+    const { trainedData, repeat } = step._info.options;
 
     const conversationData = await this.dialog.conversationDataAccessor.get(
       step.context
     );
 
-    const userIntent = await predict(step.result, intent);
+    const userIntent = await predict(step.result, trainedData);
 
     if (!userIntent) {
       return await step.replaceDialog(PROMPTING_WATERFALL, {
@@ -159,7 +170,7 @@ class Prompting extends ComponentDialog {
       });
     }
 
-    conversationData.variables[answer] = userIntent;
+    conversationData.variables.push({ name: "answer", value: userIntent.intent, type: "string" });
 
     return await step.endDialog({ checkAction: true });
   }
