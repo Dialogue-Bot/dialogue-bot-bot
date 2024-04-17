@@ -104,7 +104,7 @@ class Prompting extends ComponentDialog {
   }
 
   async BuiltinValidate(step) {
-    const { id, grammarType, repeat, trainedData } = step._info.options;
+    const { id, grammarType, repeat } = step._info.options;
 
     if (grammarType == "intent") return await step.next(step.result);
 

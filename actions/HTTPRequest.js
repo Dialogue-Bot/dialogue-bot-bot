@@ -1,6 +1,6 @@
 const { ComponentDialog, WaterfallDialog } = require('botbuilder-dialogs');
 const { REPLACE_ACTION, HTTP_REQUEST } = require('../Constant');
-const { replaceData, replaceObjWithParam, keyValueToObject } = require('../utils/utils');
+const { replaceData, replaceObjWithParam, keyValueToObject, arrayKeyValueToObject } = require('../utils/utils');
 const { default: axios } = require('axios');
 
 const HTTPREQUEST_WATERFALL = 'HTTPREQUEST_WATERFALL';
@@ -14,18 +14,21 @@ class HttpRequest extends ComponentDialog {
   }
 
   async HttpRequest(step) {
-    const { id, name, assignUserResponse, httpRequest, nextAction } = step._info.options;
-    const {url, method, body, headers, params, query} = httpRequest;
+    const { name, assignUserResponse, httpRequest, nextActions } = step._info.options;
+    let {url, method, body, headers, params} = httpRequest;
 
     const conversationData = await this.dialog.conversationDataAccessor.get(step.context);
 
     try {
+      params = arrayKeyValueToObject(params);
+      headers = arrayKeyValueToObject(headers);
+      body = arrayKeyValueToObject(body)
       let config = {
         method: method,
         url: replaceData({ text: url, data: conversationData.variables }),
-        data: replaceObjWithParam(conversationData.variables, keyValueToObject(body) || {}),
-        headers: replaceObjWithParam(conversationData.variables, keyValueToObject(headers) || {}),
-        params: replaceObjWithParam(conversationData.variables, keyValueToObject(params) || {}),
+        data: replaceObjWithParam(conversationData.variables, keyValueToObject(body) || body),
+        headers: replaceObjWithParam(conversationData.variables, keyValueToObject(headers) || headers),
+        params: replaceObjWithParam(conversationData.variables, keyValueToObject(params) || params),
       };
 
       console.log(`[HTTP] ${name} ${JSON.stringify(config)}`);
@@ -41,12 +44,12 @@ class HttpRequest extends ComponentDialog {
       }
     } catch (e) {
       console.log(`[HTTP] HTTP request failed`, e.message);
-      const nextId = nextAction.find((c) => c.case == 'failed');
-      return await step.endDialog({ actionId: nextId && nextId.actionId });
+      const nextId = nextActions.find((c) => c.condition == 'failure');
+      return await step.endDialog({ actionId: nextId && nextId.id });
     }
 
-    // const nextId = nextAction.find((c) => c.case == 'success');
-    return await step.endDialog({ actionId: nextAction });
+    const nextId = nextActions.find((c) => c.condition == 'success');
+    return await step.endDialog({ actionId: nextId && nextId.id });
   }
 }
 

@@ -322,6 +322,22 @@ const keyValueToObject = (string) => {
   return result;
 };
 
+
+const arrayKeyValueToObject = (array) =>{
+  if(!Array.isArray(array) || !array.length) return {};
+  let result = {};
+  try {
+    array.forEach((e) => {
+      result[e.key] = e.value;
+    });
+  } catch (e) {
+    console.log(`ArrayKeyValueToObject - Can not replace`);
+    console.log(e.stack);
+  }
+
+  return result;
+}
+
 module.exports = {
   endConversation,
   getTranslatedMessage,
@@ -330,4 +346,5 @@ module.exports = {
   replaceObjWithParam,
   formatMessage,
   keyValueToObject,
+  arrayKeyValueToObject,
 };

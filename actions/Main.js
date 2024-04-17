@@ -289,7 +289,7 @@ class MainDialog extends ComponentDialog {
             return Case;
           continue;
         case "not_equal":
-          if (checkData != value) return Case;
+          if (checkData.toLocaleLowerCase() != value.toLocaleLowerCase()) return Case;
           continue;
         case "less_than":
           if (parseInt(checkData) < parseInt(value)) return Case;
