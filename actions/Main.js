@@ -13,16 +13,18 @@ const {
   HTTP_REQUEST,
   SUB_FLOW,
   CHECK_VARIABLE,
+  SEND_MAIL,
 } = require("../Constant");
 
 const { getFlowByChannelId } = require("../services/proxy");
 const { SendText } = require("./SendText");
 const { Prompting } = require("./Prompting");
-const { endConversation, keyValueToObject } = require("../utils/utils");
+const { endConversation, keyValueToObject, replaceSubFlowValueAssigned } = require("../utils/utils");
 const { SetData } = require("./SetData");
 const { HttpRequest } = require("./HTTPRequest");
 const { SubFlow } = require("./SubFlow");
 const { CheckVariable } = require("./CheckVariable");
+const { SendMail } = require("./SendMail");
 
 const CHAT = "CHAT";
 
@@ -45,6 +47,7 @@ class MainDialog extends ComponentDialog {
     this.addDialog(new HttpRequest(this));
     this.addDialog(new SubFlow(this));
     this.addDialog(new CheckVariable(this));
+    this.addDialog(new SendMail(this));
 
     this.addDialog(
       new WaterfallDialog("Main_Water_Fall", [this.ReadFlow.bind(this)])
@@ -176,18 +179,18 @@ class MainDialog extends ComponentDialog {
     const { action } = step._info.options;
 
     const actions = {
-      message: SEND_TEXT,
+      "message": SEND_TEXT,
       "prompt-and-collect": PROMPTING,
       "http-request": HTTP_REQUEST,
       "sub-flow": SUB_FLOW,
       "check-variables": CHECK_VARIABLE,
+      "send-mail": SEND_MAIL,
     };
 
     if (!actions[action]) {
       console.log("Can can not find next action type => end dialog");
       return await endConversation(step);
     }
-
     return await step.beginDialog(actions[action], step._info.options);
   }
 
@@ -245,6 +248,8 @@ class MainDialog extends ComponentDialog {
 
       if (conversationData.flow.length) {
         conversationData.currentFlow = conversationData.flow[0];
+        conversationData.variables = replaceSubFlowValueAssigned(conversationData.variables, conversationData.subFlowOutput);
+        conversationData.subFlowOutput = [];
       } else {
         conversationData.currentFlow = [];
       }

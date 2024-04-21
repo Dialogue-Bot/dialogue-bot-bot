@@ -49,7 +49,7 @@ class SendText extends ComponentDialog {
 
     await step.context.sendActivity(msg);
 
-    return await step.endDialog({ id: nextAction });
+    return await step.endDialog({ actionId: nextAction });
   }
 }
 

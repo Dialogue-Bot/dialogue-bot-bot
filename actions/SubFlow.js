@@ -15,13 +15,13 @@ class SubFlow extends ComponentDialog {
   }
 
   async GetSubFlow(step) {
-    let { id, name, nextAction, subFlowId } = step._info.options;
+    let { name, nextAction, subFlowId, assignVars } = step._info.options;
 
     console.log(`[SubFlow] ${name}`);
 
     const conversationData = await this.dialog.conversationDataAccessor.get(step.context);
 
-    const {botId, flow, testBot } = conversationData;
+    const {flow, testBot } = conversationData;
 
     let { flows, settings, variables } = (await getFlowById(subFlowId, testBot)) || {};
 
@@ -41,6 +41,7 @@ class SubFlow extends ComponentDialog {
 
     variables = variables.filter(v => v.name !== 'language');
     conversationData.variables = [ ...conversationData.variables, ...(variables ? variables : {}) ];
+    conversationData.subFlowOutput = assignVars || [];
     conversationData.currentFlow = flows;
     conversationData.continueAction = nextAction;
 
