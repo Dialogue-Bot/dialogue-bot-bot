@@ -25,7 +25,6 @@ const predict = async (prompt, refId) => {
     return data.data;
   } catch (e) {
     console.log('Predict failed: ' + e.message);
-    console.log(e);
   }
 };
 
