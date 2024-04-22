@@ -23,11 +23,11 @@ class SendMail extends ComponentDialog {
       step.context
     );
     const { botId } = conversationData;
-    const { to, body, subject } = sendMail;
+    let { to, body, subject } = sendMail;
     
-    to = replaceData({ text: to, data: conversationData.variables }) || '',
-    body = replaceData({ text: body, data: conversationData.variables }) || '',
-    subject = replaceData({ text: subject, data: conversationData.variables }) || '',
+    to = replaceData({ text: to, data: conversationData.variables });
+    body = replaceData({ text: body, data: conversationData.variables });
+    subject = replaceData({ text: subject, data: conversationData.variables });
 
     await botSendMail(to, subject, body, botId);
 
