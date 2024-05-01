@@ -15,8 +15,10 @@ const {
   CHECK_VARIABLE,
   SEND_MAIL,
 } = require("../Constant");
+const { REFERENCE_ID_CONNECT_AGENT } = process.env;
 
 const { getFlowByChannelId } = require("../services/proxy");
+const { predict } = require('../services/intent');
 const { SendText } = require("./SendText");
 const { Prompting } = require("./Prompting");
 const { endConversation, keyValueToObject, replaceSubFlowValueAssigned } = require("../utils/utils");
@@ -103,6 +105,20 @@ class MainDialog extends ComponentDialog {
       console.error(`Handle event ${context.activity.name} error : ${e.message}`);
       console.error(e.stack);
     }
+  }
+
+  async predictConnectAgentWEB(context) {
+    if (context.activity.type === CustomActivityTypes.Message && context.activity.text && context.activity.channelId === 'WEB') {
+      const predictConnAgent = await predict(context.activity.text, REFERENCE_ID_CONNECT_AGENT);
+
+      if (!predictConnAgent) return false;
+
+      context.activity.isConnectAgent = true;
+      await this.sendTypingIndicator(context, true);
+      await context.sendActivity({ type: CustomActivityTypes.ConnectAgent, text: predictConnAgent.answer });
+      this.sendTypingIndicator(context, false);
+      return true;
+    } 
   }
 
   async handleEventEndConversation(turnContext) {

@@ -3,6 +3,10 @@ const { ConversationState, MemoryStorage, UserState } = require('botbuilder');
 
 const CustomAdapter = require('./classes/CustomAdapter');
 const { MainDialog } = require('./actions/Main');
+const { predict } = require('./services/intent');
+const { CustomActivityTypes } = require('./classes/CustomActivityTypes');
+
+const { REFERENCE_ID_CONNECT_AGENT } = process.env;
 
 class DialogBot extends ActivityHandler {
   constructor(conversationState, userState, dialog) {
@@ -33,7 +37,16 @@ class DialogBot extends ActivityHandler {
           });
 
           if (!ctx.responded && ctx.activity.type === ActivityTypes.Message) {
-            if (context.activity.text) console.log(`User message: ${context.activity.text}`);
+            if (context.activity.text) {
+              if(context.activity.isConnectAgent) {
+                console.log(`User ${context.activity.from.id} connect agent`);
+                context.activity.typeName = 'endConversation';
+                await this.dialog.handleEventEndConversation(context)
+              }
+              else {
+                console.log(`User message: ${context.activity.text}`)
+              }
+            }
 
             if (ctx.activity.data) {
               await this.dialog.savePayload(ctx, next);
@@ -50,6 +63,17 @@ class DialogBot extends ActivityHandler {
     });
 
     this.onMessage(async (context, next) => {
+      // if (context.activity.type === ActivityTypes.Message && context.activity.text && context.activity.channelId === 'WEB') {
+      //   const predictConnAgent = await predict(context.activity.text, REFERENCE_ID_CONNECT_AGENT);
+      //   if (predictConnAgent) {
+      //     context.activity.isConnectAgent = true;
+      //     await mainDialog.sendTypingIndicator(context, true);
+      //     await context.sendActivity({ type: CustomActivityTypes.ConnectAgent, text: predictConnAgent.answer });
+      //     return mainDialog.sendTypingIndicator(context, false);
+      //   }
+      // } 
+      if (await mainDialog.predictConnectAgentWEB(context)) return;
+
       // Run the Dialog with the new message Activity.
       await this.dialog.run(context, this.dialogState);
       await mainDialog.sendTypingIndicator(context, false);
