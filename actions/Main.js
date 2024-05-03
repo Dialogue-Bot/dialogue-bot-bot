@@ -108,6 +108,7 @@ class MainDialog extends ComponentDialog {
   }
 
   async predictConnectAgentWEB(context) {
+    if (context.activity.testBot) return false;
     if (context.activity.type === CustomActivityTypes.Message && context.activity.text && context.activity.channelId === 'WEB') {
       const predictConnAgent = await predict(context.activity.text, REFERENCE_ID_CONNECT_AGENT);
 

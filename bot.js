@@ -63,15 +63,6 @@ class DialogBot extends ActivityHandler {
     });
 
     this.onMessage(async (context, next) => {
-      // if (context.activity.type === ActivityTypes.Message && context.activity.text && context.activity.channelId === 'WEB') {
-      //   const predictConnAgent = await predict(context.activity.text, REFERENCE_ID_CONNECT_AGENT);
-      //   if (predictConnAgent) {
-      //     context.activity.isConnectAgent = true;
-      //     await mainDialog.sendTypingIndicator(context, true);
-      //     await context.sendActivity({ type: CustomActivityTypes.ConnectAgent, text: predictConnAgent.answer });
-      //     return mainDialog.sendTypingIndicator(context, false);
-      //   }
-      // } 
       if (await mainDialog.predictConnectAgentWEB(context)) return;
 
       // Run the Dialog with the new message Activity.
