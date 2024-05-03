@@ -116,7 +116,7 @@ class MainDialog extends ComponentDialog {
       context.activity.isConnectAgent = true;
       await this.sendTypingIndicator(context, true);
       await context.sendActivity({ type: CustomActivityTypes.ConnectAgent, text: predictConnAgent.answer });
-      this.sendTypingIndicator(context, false);
+      await this.sendTypingIndicator(context, false);
       return true;
     } 
   }
