@@ -4,9 +4,6 @@ const { ConversationState, MemoryStorage, UserState } = require('botbuilder');
 const CustomAdapter = require('./classes/CustomAdapter');
 const { MainDialog } = require('./actions/Main');
 const { predict } = require('./services/intent');
-const { CustomActivityTypes } = require('./classes/CustomActivityTypes');
-
-const { REFERENCE_ID_CONNECT_AGENT } = process.env;
 
 class DialogBot extends ActivityHandler {
   constructor(conversationState, userState, dialog) {
