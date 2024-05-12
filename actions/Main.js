@@ -107,21 +107,6 @@ class MainDialog extends ComponentDialog {
     }
   }
 
-  async predictConnectAgentWEB(context) {
-    if (context.activity.testBot) return false;
-    if (context.activity.type === CustomActivityTypes.Message && context.activity.text && context.activity.channelId === 'WEB') {
-      const predictConnAgent = await predict(context.activity.text, REFERENCE_ID_CONNECT_AGENT);
-
-      if (!predictConnAgent) return false;
-
-      context.activity.isConnectAgent = true;
-      await this.sendTypingIndicator(context, true);
-      await context.sendActivity({ type: CustomActivityTypes.ConnectAgent, text: predictConnAgent.answer });
-      await this.sendTypingIndicator(context, false);
-      return true;
-    } 
-  }
-
   async handleEventEndConversation(turnContext) {
     const dialogContext = await this.dialogSet.createContext(turnContext);
 

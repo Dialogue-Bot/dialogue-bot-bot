@@ -1,24 +1,31 @@
-const { ActivityHandler, ActivityTypes } = require('botbuilder');
-const { ConversationState, MemoryStorage, UserState } = require('botbuilder');
+const { ActivityHandler, ActivityTypes } = require("botbuilder");
+const { ConversationState, MemoryStorage, UserState } = require("botbuilder");
 
-const CustomAdapter = require('./classes/CustomAdapter');
-const { MainDialog } = require('./actions/Main');
-const { predict } = require('./services/intent');
+const CustomAdapter = require("./classes/CustomAdapter");
+const { MainDialog } = require("./actions/Main");
+const { predict } = require("./services/intent");
 
 class DialogBot extends ActivityHandler {
   constructor(conversationState, userState, dialog) {
     super();
-    if (!conversationState) throw new Error('[DialogBot]: Missing parameter. conversationState is required');
-    if (!userState) throw new Error('[DialogBot]: Missing parameter. userState is required');
-    if (!dialog) throw new Error('[DialogBot]: Missing parameter. dialog is required');
+    if (!conversationState)
+      throw new Error(
+        "[DialogBot]: Missing parameter. conversationState is required"
+      );
+    if (!userState)
+      throw new Error("[DialogBot]: Missing parameter. userState is required");
+    if (!dialog)
+      throw new Error("[DialogBot]: Missing parameter. dialog is required");
 
     this.userState = userState;
     this.dialog = dialog;
     this.conversationState = conversationState;
-    this.dialogState = this.conversationState.createProperty('DialogState');
+    this.dialogState = this.conversationState.createProperty("DialogState");
 
     this.onEvent(async (context, next) => {
-      console.log(`Receive event from ${context.activity.from.id} - ${context.activity.typeName}`);
+      console.log(
+        `Receive event from ${context.activity.from.id} - ${context.activity.typeName}`
+      );
       await this.dialog.handleEvent(context);
       await next();
     });
@@ -28,22 +35,16 @@ class DialogBot extends ActivityHandler {
         context.onSendActivities(async (ctx, activities, next) => {
           const modifiedActivities = activities.map(async (activity) => {
             if (activity.type === ActivityTypes.Message) {
-              console.log(`Bot sent message: ${activity.text || JSON.stringify(activity.channelData)}`);
+              console.log(
+                `Bot sent message: ${
+                  activity.text || JSON.stringify(activity.channelData)
+                }`
+              );
             }
-
           });
 
           if (!ctx.responded && ctx.activity.type === ActivityTypes.Message) {
-            if (context.activity.text) {
-              if(context.activity.isConnectAgent) {
-                console.log(`User ${context.activity.from.id} connect agent`);
-                context.activity.typeName = 'endConversation';
-                await this.dialog.handleEventEndConversation(context)
-              }
-              else {
-                console.log(`User message: ${context.activity.text}`)
-              }
-            }
+            if (context.activity.text) console.log(`User message: ${context.activity.text}`);
 
             if (ctx.activity.data) {
               await this.dialog.savePayload(ctx, next);
@@ -54,14 +55,12 @@ class DialogBot extends ActivityHandler {
         });
         await next();
       } catch (e) {
-        console.log('Error occurred while running flow: ' + e.message);
+        console.log("Error occurred while running flow: " + e.message);
         console.error((e.error && e.error.stack) || e.stack);
       }
     });
 
     this.onMessage(async (context, next) => {
-      if (await mainDialog.predictConnectAgentWEB(context)) return;
-
       // Run the Dialog with the new message Activity.
       await this.dialog.run(context, this.dialogState);
       await mainDialog.sendTypingIndicator(context, false);
