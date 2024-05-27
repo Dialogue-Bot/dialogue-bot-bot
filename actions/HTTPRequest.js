@@ -38,7 +38,7 @@ class HttpRequest extends ComponentDialog {
       if (assignUserResponse) {
         conversationData.variables = conversationData.variables.map((d) =>
           d.name === assignUserResponse
-            ? { name: assignUserResponse, value: data, type: typeof data }
+            ? { name: assignUserResponse, value: data, type: typeof data, fill: true }
             : d
         );
       }

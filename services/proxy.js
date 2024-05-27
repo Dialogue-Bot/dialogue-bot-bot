@@ -1,13 +1,16 @@
 const axios = require("axios");
 
-const { PROXY_DOMAIN } = process.env;
+const { PROXY_DOMAIN, API_TOKEN } = process.env;
 
-const getFlowByChannelId = async (channelId, testBot) => {
+const getFlowByContactId = async (contactId, testBot) => {
   try {
     const config = {
       method: "GET",
-      url: PROXY_DOMAIN + "/flow/" + channelId,
+      url: PROXY_DOMAIN + "/flow/" + contactId,
       data: { isTest: testBot ?? false },
+      headers: {
+        'Authorization': API_TOKEN
+      }
     };
     const { data } = await axios(config);
 
@@ -23,6 +26,9 @@ const getFlowById = async (id, testBot) => {
       method: "GET",
       url: PROXY_DOMAIN + "/bot/flow/" + id,
       data: { isTest: testBot ?? false },
+      headers: {
+        'Authorization': API_TOKEN
+      }
     };
 
     const { data } = await axios(config);
@@ -45,6 +51,9 @@ const botSendMail = async (to, subject, template, contactId) => {
         contactId,
         template,
       },
+      headers: {
+        'Authorization': API_TOKEN
+      }
     };
 
     const { data } = await axios(config);
@@ -57,7 +66,7 @@ const botSendMail = async (to, subject, template, contactId) => {
 };
 
 module.exports = {
-  getFlowByChannelId,
+  getFlowByContactId,
   getFlowById,
   botSendMail,
 };

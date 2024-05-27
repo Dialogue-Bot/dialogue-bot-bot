@@ -11,9 +11,7 @@ const {
   getExtendTypeMessage,
 } = require("../utils/utils");
 const { translate } = require("../services/translate");
-const { default: axios } = require("axios");
 const { predict } = require("../services/intent");
-const { PROXY_DOMAIN } = process.env;
 const { ERROR_MESSAGE } = process.env;
 
 const PROMPTING_WATERFALL = "PROMPTING_WATERFALL";
@@ -45,7 +43,7 @@ class Prompting extends ComponentDialog {
       step.context
     );
 
-    const { language, data } = conversationData;
+    const { language, variables } = conversationData;
 
     if (retry) {
       if (repeat <= 0) {
@@ -62,14 +60,14 @@ class Prompting extends ComponentDialog {
 
       if (notMatchMsg) {
         await step.context.sendActivity(
-          replaceData({ text: notMatchMsg.message, data })
+          replaceData({ text: notMatchMsg.message, data: variables })
         );
       }
     }
 
     let msg = getTranslatedMessage(contents, language);
 
-    msg.message = replaceData({ text: msg.message, data });
+    msg.message = replaceData({ text: msg.message, data: variables });
 
     if (msg.language != language) {
       msg.message = await translate(msg.message, msg.language, language);
@@ -111,6 +109,7 @@ class Prompting extends ComponentDialog {
     const conversationData = await this.dialog.conversationDataAccessor.get(
       step.context
     );
+    
     let answer = { name: "answer", value: step.result, type: "string" };
 
     //check answer

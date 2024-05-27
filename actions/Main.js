@@ -15,10 +15,8 @@ const {
   CHECK_VARIABLE,
   SEND_MAIL,
 } = require("../Constant");
-const { REFERENCE_ID_CONNECT_AGENT } = process.env;
 
-const { getFlowByChannelId } = require("../services/proxy");
-const { predict } = require('../services/intent');
+const { getFlowByContactId } = require("../services/proxy");
 const { SendText } = require("./SendText");
 const { Prompting } = require("./Prompting");
 const { endConversation, keyValueToObject, replaceSubFlowValueAssigned } = require("../utils/utils");
@@ -37,7 +35,7 @@ class MainDialog extends ComponentDialog {
     this.adapter = adapter;
     this.conversationState = conversationState;
     this.conversationDataAccessor =
-    this.conversationState.createProperty("conversationData");
+      this.conversationState.createProperty("conversationData");
     this.dialogState = conversationState.createProperty("DialogState");
     this.dialogSet = new DialogSet(this.dialogState);
     // this.dialogSet = new DialogSet(this.conversationDataAccessor);
@@ -94,6 +92,10 @@ class MainDialog extends ComponentDialog {
   async handleEvent(context) {
     const { activity } = context;
     try {
+      if (!activity) {
+        throw new Error('Can not find activity');
+      }
+
       switch (activity.typeName) {
         case 'endConversation':
           await this.handleEventEndConversation(context);
@@ -111,7 +113,6 @@ class MainDialog extends ComponentDialog {
     const dialogContext = await this.dialogSet.createContext(turnContext);
 
     if (turnContext.activity.typeName == 'endConversation') {
-
       console.log(`[Main] - Run function - handel ${turnContext.activity.typeName} event => end conv`);
       return await endConversation(dialogContext);
     }
@@ -139,7 +140,7 @@ class MainDialog extends ComponentDialog {
     );
 
     let { flows, settings, variables } =
-      (await getFlowByChannelId(recipient.id, testBot)) || {};
+      (await getFlowByContactId(recipient.id, testBot)) || {};
 
     if (!flows) return await endConversation(step, ERROR_MESSAGE);
 
@@ -208,16 +209,16 @@ class MainDialog extends ComponentDialog {
     );
 
     const { currentFlow, continueAction } = conversationData;
-    
+
     if (assignUserResponse) {
       let findVar = conversationData.variables.find(
         (x) => x.name === assignUserResponse
       );
-      const value = conversationData.variables.find(x=> x.name === 'answer')?.value;
-      if (findVar && value) {
+      const value = conversationData.variables.find(x => x.name === 'answer')?.value;
+      if (findVar && !findVar.fill && value) {
         findVar.value = value;
       }
-      if(assignUserResponse === 'language' && ['en', 'vi'].includes(value)) conversationData[assignUserResponse] = value;
+      if (assignUserResponse === 'language' && ['en', 'vi'].includes(value)) conversationData[assignUserResponse] = value;
     }
 
     let nextAction;

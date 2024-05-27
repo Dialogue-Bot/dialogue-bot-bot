@@ -326,11 +326,11 @@ const formatMessage = ({ text, type, extend, conversationData }) => {
   return { type: "message", text, channelData: { type, extend } };
 };
 
-const keyValueToObject = (string) => {
-  if (!string) return {};
+const keyValueToObject = (data) => {
+  if (!data || !!data ) return {};
   let result = {};
   try {
-    const temp = JSON.parse(string);
+    const temp = JSON.parse(data);
 
     if (!Array.isArray(temp)) return {};
 
