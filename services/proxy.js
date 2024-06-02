@@ -45,7 +45,6 @@ const botSendMail = async (to, subject, template, contactId) => {
       method: "POST",
       url: PROXY_DOMAIN + "/bot-mail/send",
       data: {
-        from: '2051120245@ut.edu.vn',
         to,
         subject,
         contactId,
