@@ -215,7 +215,7 @@ class MainDialog extends ComponentDialog {
         (x) => x.name === assignUserResponse
       );
       const value = conversationData.variables.find(x => x.name === 'answer')?.value;
-      if (findVar && !findVar.fill && value) {
+      if (findVar && !findVar.filled && value) {
         findVar.value = value;
       }
       if (assignUserResponse === 'language' && ['en', 'vi'].includes(value)) conversationData[assignUserResponse] = value;

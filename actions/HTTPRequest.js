@@ -22,7 +22,7 @@ class HttpRequest extends ComponentDialog {
     try {
       params = arrayKeyValueToObject(params);
       headers = arrayKeyValueToObject(headers);
-      body = arrayKeyValueToObject(body)
+      body = arrayKeyValueToObject(body);
       let config = {
         method: method,
         url: replaceData({ text: url, data: conversationData.variables }),
@@ -38,7 +38,7 @@ class HttpRequest extends ComponentDialog {
       if (assignUserResponse) {
         conversationData.variables = conversationData.variables.map((d) =>
           d.name === assignUserResponse
-            ? { name: assignUserResponse, value: data, type: typeof data, fill: true }
+            ? { name: assignUserResponse, value: data, type: typeof data, filled: true }
             : d
         );
       }
