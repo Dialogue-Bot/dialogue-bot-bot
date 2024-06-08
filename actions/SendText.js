@@ -1,6 +1,6 @@
 const { ComponentDialog, WaterfallDialog } = require('botbuilder-dialogs');
 const { SEND_TEXT } = require('../Constant');
-const { getTranslatedMessage, replaceData, formatMessage, getExtendTypeMessage } = require('../utils/utils');
+const { getPrompt, replaceData, formatMessage, getExtendTypeMessage } = require('../utils/utils');
 const { translate } = require('../services/translate');
 const { ERROR_MESSAGE } = process.env;
 
@@ -15,19 +15,17 @@ class SendText extends ComponentDialog {
   }
 
   async SendTextAction(step) {
-    const { name, nextAction, prompt_type, extend, contents } = step._info.options;
+    const { name, nextAction, extend, contents } = step._info.options;
 
-    console.log(`[SendMessage] ${name}`);
+    console.log(`[SendText] ${name}`);
 
     const conversationData = await this.dialog.conversationDataAccessor.get(step.context);
 
-    const { language, data } = conversationData;
+    const { language } = conversationData;
 
-    let msg = getTranslatedMessage(contents, language);
+    let msg = getPrompt(contents, language);
 
-    if (msg.message) {
-      msg.message = replaceData({ text: msg.message, data: conversationData.variables });
-    }
+    msg.message = replaceData({ text: msg.message, data: conversationData.variables });
 
     // translate
     msg.message = await translate(msg.message, msg.language, language);
@@ -39,7 +37,6 @@ class SendText extends ComponentDialog {
     if (extendType && Array.isArray(extendType.data) && extendType.data.length) {
       msg.channelData = {};
 
-      // msg.channelData['extendData'] = extendType.data;      
       msg.channelData.extendData = extendType.data;
 
       msg.channelData.type = extendType.type;

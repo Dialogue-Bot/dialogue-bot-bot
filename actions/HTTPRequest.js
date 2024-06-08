@@ -1,5 +1,5 @@
 const { ComponentDialog, WaterfallDialog } = require('botbuilder-dialogs');
-const { REPLACE_ACTION, HTTP_REQUEST } = require('../Constant');
+const {  HTTP_REQUEST } = require('../Constant');
 const { replaceData, replaceObjWithParam, keyValueToObject, arrayKeyValueToObject } = require('../utils/utils');
 const { default: axios } = require('axios');
 
@@ -43,7 +43,7 @@ class HttpRequest extends ComponentDialog {
         );
       }
     } catch (e) {
-      console.log(`[HTTP] HTTP request failed`, e.message);
+      console.log(`HttpRequest run failed - `, e.message);
       const nextId = nextActions.find((c) => c.condition == 'failure');
       return await step.endDialog({ actionId: nextId && nextId.id });
     }

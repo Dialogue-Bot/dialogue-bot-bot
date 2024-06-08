@@ -52,7 +52,7 @@ const replaceData = ({ text, data }) => {
   return text;
 };
 
-const getTranslatedMessage = (contents, language, error) => {
+const getPrompt = (contents, language, error) => {
   let result = { message: "", language: "en", type: "text" };
 
   let data = detectContentsLanguage(contents, language);
@@ -385,7 +385,7 @@ const replaceSubFlowValueAssigned = (variables, subFlowOutput) => {
 
 module.exports = {
   endConversation,
-  getTranslatedMessage,
+  getPrompt,
   getExtendTypeMessage,
   replaceData,
   replaceObjWithParam,
