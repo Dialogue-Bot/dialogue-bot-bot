@@ -11,7 +11,7 @@ const translate = async (text, fromLang = 'auto', toLang = 'en') => {
       )}`,
     };
 
-    console.log(config);
+    console.log('[translate] - ' + JSON.stringify(config));
 
     const { data } = await axios(config);
 
@@ -19,10 +19,11 @@ const translate = async (text, fromLang = 'auto', toLang = 'en') => {
       throw new Error('Can not translate text');
     }
 
-    console.log(`[freeTranslate] Translated: ${JSON.stringify(data)}`);
+    console.log(`Translated: ${fromLang} -> ${toLang} | ${text} -> ${data[0][0][0]}`);
+
     return data[0][0][0];
   } catch (error) {
-    console.log('[freeTranslate] err:', error.message);
+    console.log('Translate filed - ', error.message);
     console.log(error.response && error.response.data);
     console.error(error.stack);
     return text;
