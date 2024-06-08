@@ -58,7 +58,7 @@ class Prompting extends ComponentDialog {
 
       const notMatchMsg = getPrompt(contents, language, retry);
 
-      if (notMatchMsg) {
+      if (notMatchMsg && notMatchMsg.message) {
         notMatchMsg.message = replaceData({ text: notMatchMsg.message, data: variables });
 
         notMatchMsg.message = await translate(notMatchMsg.message, notMatchMsg.language, language);
