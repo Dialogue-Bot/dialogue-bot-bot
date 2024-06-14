@@ -109,7 +109,7 @@ class Prompting extends ComponentDialog {
     const conversationData = await this.dialog.conversationDataAccessor.get(
       step.context
     );
-    
+
     let answer = { name: "answer", value: step.result, type: "string" };
 
     // assign answer
@@ -153,7 +153,11 @@ class Prompting extends ComponentDialog {
       step.context
     );
 
-    const userIntent = await predict(step.result, trainedData);
+    const { language } = conversationData;
+
+    const userInput = await translate(step.result, language);
+
+    const userIntent = await predict(userInput, trainedData);
 
     if (!userIntent) {
       return await step.replaceDialog(PROMPTING_WATERFALL, {
