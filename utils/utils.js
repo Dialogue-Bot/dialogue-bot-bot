@@ -1,9 +1,9 @@
-const { translate } = require("../services/translate");
+const { translate } = require('../services/translate');
 const endConversation = async (step, message) => {
   if (message) await step.context.sendActivity(message);
-  if (step.parent && typeof step.parent.cancelAllDialogs == "function")
+  if (step.parent && typeof step.parent.cancelAllDialogs == 'function')
     await step.parent.cancelAllDialogs();
-  if (typeof step.cancelAllDialogs == "function") await step.cancelAllDialogs();
+  if (typeof step.cancelAllDialogs == 'function') await step.cancelAllDialogs();
 
   return await step.endDialog();
 };
@@ -15,7 +15,7 @@ const replaceData = ({ text, data }) => {
     text = text.replace(
       /{([a-zA-Z0-9_ ]+(?:->[a-zA-Z0-9_ ]+)*)}/g,
       (match, key) => {
-        const keys = key.split("->");
+        const keys = key.split('->');
         let value =
           data.find((item) => item.name === keys[0]).value || undefined;
 
@@ -37,7 +37,7 @@ const replaceData = ({ text, data }) => {
         const result = eval(expression);
         return result;
       } catch (error) {
-        console.error("Invalid expression:", expression);
+        console.error('Invalid expression:', expression);
         return match; // Return the original placeholder if there's an error in the expression
       }
     });
@@ -53,7 +53,7 @@ const replaceData = ({ text, data }) => {
 };
 
 const getPrompt = (contents, language, error) => {
-  let result = { message: "", language: "en", type: "text" };
+  let result = { message: '', language: 'en', type: 'text' };
 
   let data = detectContentsLanguage(contents, language);
 
@@ -73,7 +73,7 @@ const detectContentsLanguage = (contents, language) => {
     };
   }
 
-  language = ["en", "vi"].find((x) => x !== language);
+  language = ['en', 'vi'].find((x) => x !== language);
 
   if (contents[language]) {
     return {
@@ -88,11 +88,11 @@ const detectContentsLanguage = (contents, language) => {
 
 const getExtendTypeMessage = async (contents, language, channelId) => {
   if (!Object.keys(contents).length) return;
-  let result = { data: "", language: "en" };
+  let result = { data: '', language: 'en' };
 
-  if (!["LIN", "WEB", "MSG"].includes(channelId)) {
+  if (!['LIN', 'WEB', 'MSG'].includes(channelId)) {
     console.log(
-      "[getExtendTypeMessage] Bot does not support channel " + channelId
+      '[getExtendTypeMessage] Bot does not support channel ' + channelId
     );
     return;
   }
@@ -100,29 +100,108 @@ const getExtendTypeMessage = async (contents, language, channelId) => {
   contents = detectContentsLanguage(contents, language);
 
   if (contents && contents.buttons && contents.buttons.length) {
+    const quickReplyData = await formatQuickReply(
+      channelId,
+      contents.buttons,
+      contents.language,
+      language
+    );
     result = {
-      data:
-        channelId === "LIN"
-          ? formatLINEButtons(contents.buttons, contents.language, language)
-          : (await formatButtons(
-              contents.buttons,
-              contents.language,
-              language
-            )) || [],
-      type: "list-button",
+      data: quickReplyData,
+      type: 'list-button',
     };
   }
   if (contents && contents.cards && contents.cards.length) {
+    const cardsData =
+      channelId === 'LIN'
+        ? await formatLINECards(contents.cards, contents.language, language)
+        : (await formatCards(contents.cards, contents.language, language)) ||
+          [];
     result = {
-      data:
-        channelId === "LIN"
-          ? formatLINECards(contents.cards, contents.language, language)
-          : (await formatCards(contents.cards, contents.language, language)) ||
-            [],
-      type: "list-card",
+      data: cardsData,
+      type: 'list-card',
     };
   }
 
+  return result;
+};
+
+const formatQuickReply = async (
+  channelId,
+  buttons,
+  currentLanguage,
+  defaultLanguage
+) => {
+  let result = [];
+  switch (channelId) {
+    case 'LIN':
+      result = formatQuickReplyLIN(buttons, currentLanguage, defaultLanguage);
+      break;
+    case 'MSG':
+      result = await formatQuickReplyMSG(
+        buttons,
+        currentLanguage,
+        defaultLanguage
+      );
+      break;
+    case 'WEB':
+      result = await formatButtons(buttons, currentLanguage, defaultLanguage);
+    default:
+      break;
+  }
+  return result;
+};
+
+const formatQuickReplyMSG = async (
+  buttons,
+  currentLanguage,
+  defaultLanguage
+) => {
+  let result = [];
+  for (let button of buttons) {
+    try {
+      const translateLabel =
+        currentLanguage !== defaultLanguage
+          ? await translate(button.label, currentLanguage, defaultLanguage)
+          : button.label;
+      if (button.type !== 'postback') return;
+      result.push({
+        content_type: 'text',
+        payload: button.value,
+        title: translateLabel,
+      });
+    } catch (error) {
+      console.log('[formatQuickReplyMSG] format failed: ' + error.message);
+    }
+  }
+  return result;
+};
+
+const formatQuickReplyLIN = async (
+  buttons,
+  currentLanguage,
+  defaultLanguage
+) => {
+  let result = [];
+  for (let button of buttons) {
+    try {
+      const translateLabel =
+        currentLanguage !== defaultLanguage
+          ? await translate(button.label, currentLanguage, defaultLanguage)
+          : button.label;
+      if (button.type !== 'postback') return;
+      result.push({
+        type: 'action',
+        action: {
+          type: 'message',
+          label: translateLabel,
+          text: button.value,
+        },
+      });
+    } catch (error) {
+      console.log('[formatQuickReplyLIN] format failed: ' + error.message);
+    }
+  }
   return result;
 };
 
@@ -131,19 +210,23 @@ const formatCards = async (cards, currentLanguage, defaultLanguage) => {
   if (!Array.isArray(cards)) return result;
 
   for (const data of cards) {
-    const card = {
-      title: data.title,
-      image_url: data.imageUrl,
-      subtitle:
-        currentLanguage !== defaultLanguage
-          ? await translate(data.subtitle, currentLanguage, defaultLanguage)
-          : data.subtitle,
-    };
-    const buttons =
-      data.buttons &&
-      (await formatButtons(data.buttons, currentLanguage, defaultLanguage));
-    if (buttons.length) card.buttons = buttons;
-    result.push(card);
+    try {
+      const card = {
+        title: data.title,
+        image_url: data.imageUrl,
+        subtitle:
+          currentLanguage !== defaultLanguage
+            ? await translate(data.subtitle, currentLanguage, defaultLanguage)
+            : data.subtitle,
+      };
+      const buttons =
+        data.buttons &&
+        (await formatButtons(data.buttons, currentLanguage, defaultLanguage));
+      if (buttons.length) card.buttons = buttons;
+      result.push(card);
+    } catch (error) {
+      console.log('[formatCards] format failed: ' + error.message);
+    }
   }
   return result;
 };
@@ -153,72 +236,100 @@ const formatButtons = async (buttons, currentLanguage, defaultLanguage) => {
   if (!Array.isArray(buttons)) return result;
 
   for (const button of buttons) {
-    const translateLabel =
-      currentLanguage !== defaultLanguage
-        ? await translate(button.label, currentLanguage, defaultLanguage)
-        : button.label;
-    switch (button.type) {
-      case "url":
-        result.push({
-          type: "web_url",
-          url: button.value,
-          title: translateLabel,
-        });
-        break;
-      case "postback":
-        result.push({
-          type: "postback",
-          payload: button.value,
-          title: translateLabel,
-        });
-        break;
-      default:
-        break;
+    try {
+      const translateLabel =
+        currentLanguage !== defaultLanguage
+          ? await translate(button.label, currentLanguage, defaultLanguage)
+          : button.label;
+      switch (button.type) {
+        case 'url':
+          result.push({
+            type: 'web_url',
+            url: button.value,
+            title: translateLabel,
+          });
+          break;
+        case 'postback':
+          result.push({
+            type: 'postback',
+            payload: button.value,
+            title: translateLabel,
+          });
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      console.log('[formatButtons] format failed: ' + error.message);
     }
   }
 
   return result;
 };
 
-const formatLINEButtons = (buttons, currentLanguage, defaultLanguage) => {
+const formatLINEButtons = async (buttons, currentLanguage, defaultLanguage) => {
   let result = [];
   if (!Array.isArray(buttons)) return result;
 
-  buttons.forEach((b) => {
-    switch (b.type) {
-      case "url":
-        result.push({ type: "uri", uri: b.value, label: b.label });
-        break;
-      case "postback":
-        result.push({ type: "postback", data: b.value, label: b.label });
-        break;
-      default:
-        break;
+  for (let button of buttons) {
+    try {
+      const translateLabel =
+        currentLanguage !== defaultLanguage
+          ? await translate(button.label, currentLanguage, defaultLanguage)
+          : button.label;
+      switch (button.type) {
+        case 'url':
+          result.push({
+            type: 'uri',
+            uri: button.value,
+            label: translateLabel,
+          });
+          break;
+        case 'postback':
+          result.push({
+            type: 'postback',
+            data: button.value,
+            label: translateLabel,
+            displayText: translateLabel,
+          });
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      console.log('[formatLINEButtons] format failed: ' + error.message);
     }
-  });
+  }
 
   return result;
 };
 
-const formatLINECards = (cards, currentLanguage, defaultLanguage) => {
+const formatLINECards = async (cards, currentLanguage, defaultLanguage) => {
   let result = [];
   if (!Array.isArray(cards)) return result;
 
-  cards.forEach((d) => {
-    const card = {
-      title: d.title,
-      thumbnailImageUrl: d.imageUrl,
-      text: d.subtitle,
-    };
-    const buttons = d.buttons && formatLINEButtons(d.buttons);
-    if (buttons.length) card.actions = buttons;
-    result.push(card);
-  });
+  for (let data of cards) {
+    try {
+      const card = {
+        title: data.title,
+        thumbnailImageUrl: data.imageUrl,
+        text:
+          currentLanguage !== defaultLanguage
+            ? await translate(data.subtitle, currentLanguage, defaultLanguage)
+            : data.subtitle,
+      };
+      const buttons = data.buttons && (await formatLINEButtons(data.buttons));
+      if (buttons.length) card.actions = buttons;
+      result.push(card);
+    } catch (error) {
+      console.log('[formatLINECards] format failed: ' + error.message);
+    }
+  }
   return result;
 };
 
 const accessProp = (path, object) => {
-  return path.split("->").reduce((o, i) => o[i], object);
+  return path.split('->').reduce((o, i) => o[i], object);
 };
 
 const replaceObjWithParam = (conversationData, obj) => {
@@ -230,11 +341,11 @@ const replaceObjWithParam = (conversationData, obj) => {
     for (let key of arr) {
       if (
         obj[key] &&
-        typeof obj[key] == "string" &&
+        typeof obj[key] == 'string' &&
         obj[key].match(/^{[\w->]+}$/)
       ) {
-        obj[key] = accessProp(obj[key].replace(/{|}/g, ""), conversationData);
-      } else if (obj[key] && typeof obj[key] == "string") {
+        obj[key] = accessProp(obj[key].replace(/{|}/g, ''), conversationData);
+      } else if (obj[key] && typeof obj[key] == 'string') {
         obj[key] = replaceData({ text: obj[key], data: conversationData });
       }
     }
@@ -247,7 +358,7 @@ const replaceObjWithParam = (conversationData, obj) => {
 
 const formatMSGTemplate = ({ type, conversationData, extend }) => {
   let result = {
-    type: "template",
+    type: 'template',
     channelData: { type },
   };
 
@@ -294,19 +405,19 @@ const formatReceipt = ({ extend, conversationData }) => {
     extend.summary
   );
 
-  return { type: "receipt", channelData: { ...extend } };
+  return { type: 'receipt', channelData: { ...extend } };
 };
 
 const formatMessage = ({ text, type, extend, conversationData }) => {
   if (!conversationData) return;
 
-  if (!type || type === "text") return { type: "message", text };
+  if (!type || type === 'text') return { type: 'message', text };
 
   switch (conversationData.channelId) {
-    case "MSG":
+    case 'MSG':
       const template = {
         address_template: ({ text }) => {
-          return { type: "address_template", text, channelData: { text } };
+          return { type: 'address_template', text, channelData: { text } };
         },
         receipt: ({ conversationData, contents }) =>
           formatReceipt({ conversationData, contents }),
@@ -315,19 +426,15 @@ const formatMessage = ({ text, type, extend, conversationData }) => {
       };
 
       return template[type]({ conversationData, extend, text });
-
-    // if (type == 'address_template') return { type: 'address_template', text, channelData: { type, text } };
-    // if (type == 'receipt') return formatReceipt({ conversationData, extend });
-    // return formatMSGTemplate({ type, conversationData, extend });
     default:
       break;
   }
 
-  return { type: "message", text, channelData: { type, extend } };
+  return { type: 'message', text, channelData: { type, extend } };
 };
 
 const keyValueToObject = (data) => {
-  if (!data || !!data ) return {};
+  if (!data || !!data) return {};
   let result = {};
   try {
     const temp = JSON.parse(data);
@@ -363,19 +470,20 @@ const arrayKeyValueToObject = (array) => {
 const replaceSubFlowValueAssigned = (variables, subFlowOutput) => {
   try {
     subFlowOutput.forEach((s) => {
-      const value = variables.find((v) => v.name === s.outputVar)?.value || null;
+      const value =
+        variables.find((v) => v.name === s.outputVar)?.value || null;
       let findVar = variables.find((v) => v.name === s.assignTo);
 
       if (value && findVar) {
         findVar.value = value;
       }
-      
+
       // remove subflow var in conversationData variables
       variables = variables.filter((v) => v.name !== s.outputVar);
     });
   } catch (e) {
     console.log(
-      "[replaceSubFlowValueAssigned] Can not assign value of variables in subflow to mainflow " +
+      '[replaceSubFlowValueAssigned] Can not assign value of variables in subflow to mainflow ' +
         e.message
     );
   }
