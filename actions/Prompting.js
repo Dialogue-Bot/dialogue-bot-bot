@@ -5,7 +5,7 @@ const {
 } = require("botbuilder-dialogs");
 const { PROMPTING } = require("../Constant");
 const {
-  getTranslatedMessage,
+  getPrompt,
   replaceData,
   formatMessage,
   getExtendTypeMessage,
@@ -56,22 +56,22 @@ class Prompting extends ComponentDialog {
         return await step.endDialog();
       }
 
-      const notMatchMsg = getTranslatedMessage(contents, language, retry);
+      const notMatchMsg = getPrompt(contents, language, retry);
 
-      if (notMatchMsg) {
-        await step.context.sendActivity(
-          replaceData({ text: notMatchMsg.message, data: variables })
-        );
+      if (notMatchMsg && notMatchMsg.message) {
+        notMatchMsg.message = replaceData({ text: notMatchMsg.message, data: variables });
+
+        notMatchMsg.message = await translate(notMatchMsg.message, notMatchMsg.language, language);
+
+        await step.context.sendActivity(replaceData({ text: notMatchMsg.message, data: variables }));
       }
     }
 
-    let msg = getTranslatedMessage(contents, language);
+    let msg = getPrompt(contents, language);
 
     msg.message = replaceData({ text: msg.message, data: variables });
 
-    if (msg.language != language) {
-      msg.message = await translate(msg.message, msg.language, language);
-    }
+    msg.message = await translate(msg.message, msg.language, language);
 
     msg = formatMessage({
       text: msg.message,
@@ -109,23 +109,17 @@ class Prompting extends ComponentDialog {
     const conversationData = await this.dialog.conversationDataAccessor.get(
       step.context
     );
-    
+
     let answer = { name: "answer", value: step.result, type: "string" };
 
-    //check answer
+    // assign answer
     conversationData.variables = conversationData.variables.filter(
       (x) => x.name !== "answer"
     );
     conversationData.variables.push(answer);
 
-    if (
-      !["yes-no", "number", "email", "phone-number", "number"].includes(
-        grammarType
-      )
-    ) {
-      console.log(
-        `Validate type : ${grammarType} => go check for user response`
-      );
+    if (!["yes-no", "number", "email", "phone-number", "number"].includes(grammarType)) {
+      console.log(`Validate type : ${grammarType} => go check for user response`);
       return await step.endDialog({ checkAction: true });
     }
 
@@ -159,7 +153,11 @@ class Prompting extends ComponentDialog {
       step.context
     );
 
-    const userIntent = await predict(step.result, trainedData);
+    const { language } = conversationData;
+
+    const userInput = await translate(step.result, language);
+
+    const userIntent = await predict(userInput, trainedData);
 
     if (!userIntent) {
       return await step.replaceDialog(PROMPTING_WATERFALL, {
@@ -169,7 +167,7 @@ class Prompting extends ComponentDialog {
       });
     }
 
-    conversationData.variables.push({ name: "answer", value: userIntent.intent, type: "string" });
+    conversationData.variables.push({ name: "answer", value: userIntent.intent, type: "string", filled: true });
 
     return await step.endDialog({ checkAction: true });
   }

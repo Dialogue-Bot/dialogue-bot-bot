@@ -32,7 +32,7 @@ class SubFlow extends ComponentDialog {
       if (typeof settings == 'string') settings = JSON.parse(settings);
       if (typeof variables == 'string') variables = keyValueToObject(variables);
     } catch (e) {
-      // console.log(e)
+      console.log('[Main] ReadFlow - Parse flow information failed - ' + e.message || e)
     }
 
     if (flow && flow.length) {
