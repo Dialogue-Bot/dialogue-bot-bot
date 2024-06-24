@@ -28,7 +28,7 @@ jobs:
       needs: build-push
       steps:
          - name: executing remote ssh commands using ssh key
-           uses: appleboy/ssh-action@v1.0.3
+           uses: fifsky/ssh-action@master
            with:
               script: |
                  cd /home/ubuntu
