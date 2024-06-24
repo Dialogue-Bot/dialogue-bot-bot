@@ -3,7 +3,7 @@ const Cards = require('./cards');
 const formatMessage = ({ data, type, conversationData }) => {
   if (!conversationData) return;
 
-  if (!type) return { type: 'message', text: '', channelData: {} };
+  if (!type || !['text', 'image'].includes(type)) return { type: 'message', text: '', channelData: {} };
 
   return type === 'text'
     ? { type: 'message', text: data, channelData: {} }
