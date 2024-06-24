@@ -96,7 +96,8 @@ module.exports = class Cards {
       try {
         let { title, subtitle, imageUrl, buttons } = data;
 
-        if (!title || !imageUrl || !subtitle) throw new Error('Missing parameter');
+        if (!title || !imageUrl || !subtitle)
+          throw new Error('Missing parameter');
 
         subtitle =
           this.currentLanguage !== this.defaultLanguage
@@ -111,15 +112,9 @@ module.exports = class Cards {
           title: title.slice(0, 80),
           image_url: imageUrl,
           subtitle: subtitle.slice(0, 80),
-        }
-        
-        buttons =
-          buttons &&
-          (await this.formatWebMsgButtons(
-            buttons,
-            this.currentLanguage,
-            this.defaultLanguage
-          ));
+        };
+
+        buttons = await this.formatWebMsgButtons(buttons);
         if (buttons.length) card.buttons = buttons;
         result.push(card);
       } catch (error) {
@@ -131,7 +126,7 @@ module.exports = class Cards {
     return result.slice(0, 10);
   }
 
-  async formatWebMsgButtons(buttons, currentLanguage, defaultLanguage) {
+  async formatWebMsgButtons(buttons) {
     let result = [];
     if (!Array.isArray(buttons) || !buttons.length) return result;
 
@@ -143,7 +138,11 @@ module.exports = class Cards {
 
         const translateLabel =
           currentLanguage !== defaultLanguage
-            ? await translate(label, currentLanguage, defaultLanguage).slice(0, 20)
+            ? await translate(
+                label,
+                this.currentLanguage,
+                this.defaultLanguage
+              ).slice(0, 20)
             : label.slice(0, 20);
 
         switch (type) {
@@ -180,7 +179,8 @@ module.exports = class Cards {
       try {
         let { title, subtitle, imageUrl, buttons } = data;
 
-        if (!title || !imageUrl || !subtitle) throw new Error('Missing parameter');
+        if (!title || !imageUrl || !subtitle)
+          throw new Error('Missing parameter');
 
         subtitle =
           this.currentLanguage !== this.defaultLanguage
@@ -197,7 +197,7 @@ module.exports = class Cards {
           text: subtitle.slice(0, 60),
         };
 
-        buttons = buttons && (await this.formatLINEButtons(buttons));
+        buttons = await this.formatLINEButtons(buttons);
         if (buttons.length) card.actions = buttons;
 
         result.push(card);
@@ -208,7 +208,7 @@ module.exports = class Cards {
     return result.slice(0, 10);
   }
 
-  async formatLINEButtons(buttons, currentLanguage, defaultLanguage) {
+  async formatLINEButtons(buttonse) {
     let result = [];
     if (!Array.isArray(buttons) || !buttons.length) return result;
 
@@ -220,7 +220,11 @@ module.exports = class Cards {
 
         const translateLabel =
           currentLanguage !== defaultLanguage
-            ? await translate(label, currentLanguage, defaultLanguage).slice(0, 20)
+            ? await translate(
+                label,
+                this.currentLanguage,
+                this.defaultLanguage
+              ).slice(0, 20)
             : label.slice(0, 20);
 
         switch (type) {
