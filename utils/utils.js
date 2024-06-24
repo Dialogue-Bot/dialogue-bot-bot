@@ -58,8 +58,9 @@ const getPrompt = (contents, language, error) => {
   let data = detectContentsLanguage(contents, language);
 
   if (data) {
-    result.message = error ? data.repeatMessage : data.message;
+    result.message = error ? data.repeatMessage : data.message || data.url;
     result.language = data.language;
+    result.type = data.type;
   }
 
   return result;
@@ -356,81 +357,14 @@ const replaceObjWithParam = (conversationData, obj) => {
   return obj;
 };
 
-const formatMSGTemplate = ({ type, conversationData, extend }) => {
-  let result = {
-    type: 'template',
-    channelData: { type },
-  };
-
-  let data = [];
-
-  if (!Array.isArray(extend)) return console.log(`Invalid format`);
-
-  for (let tp of extend) {
-    let rs = replaceObjWithParam(conversationData.variables, tp);
-
-    let { buttons } = tp;
-
-    rs.buttons = buttons.map((b) =>
-      replaceObjWithParam(conversationData.variables, b)
-    );
-
-    data.push(rs);
-  }
-
-  result.channelData.extend = data;
-
-  return result;
-};
-
-const formatReceipt = ({ extend, conversationData }) => {
-  if (!extend) return {};
-
-  extend = replaceObjWithParam(conversationData.variables, extend);
-
-  extend.address = replaceObjWithParam(
-    conversationData.variables,
-    extend.address
-  );
-
-  extend.elements =
-    (extend.elements &&
-      extend.elements.map((e) =>
-        replaceObjWithParam(conversationData.variables, e)
-      )) ||
-    [];
-
-  extend.summary = replaceObjWithParam(
-    conversationData.variables,
-    extend.summary
-  );
-
-  return { type: 'receipt', channelData: { ...extend } };
-};
-
-const formatMessage = ({ text, type, extend, conversationData }) => {
+const formatMessage = ({ data, type, conversationData }) => {
   if (!conversationData) return;
 
-  if (!type || type === 'text') return { type: 'message', text };
+  if (!type) return { type: 'message', text: '', channelData: {} };
 
-  switch (conversationData.channelId) {
-    case 'MSG':
-      const template = {
-        address_template: ({ text }) => {
-          return { type: 'address_template', text, channelData: { text } };
-        },
-        receipt: ({ conversationData, contents }) =>
-          formatReceipt({ conversationData, contents }),
-        template: ({ type, conversationData, contents }) =>
-          formatMSGTemplate({ type, conversationData, contents }),
-      };
-
-      return template[type]({ conversationData, extend, text });
-    default:
-      break;
-  }
-
-  return { type: 'message', text, channelData: { type, extend } };
+  return type === 'text'
+    ? { type: 'message', text: data, channelData: {} }
+    : { type: 'image', text: '', channelData: { imageUrl: data } };
 };
 
 const keyValueToObject = (data) => {

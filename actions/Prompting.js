@@ -2,20 +2,20 @@ const {
   ComponentDialog,
   WaterfallDialog,
   TextPrompt,
-} = require("botbuilder-dialogs");
-const { PROMPTING } = require("../Constant");
+} = require('botbuilder-dialogs');
+const { PROMPTING } = require('../Constant');
 const {
   getPrompt,
   replaceData,
   formatMessage,
   getExtendTypeMessage,
-} = require("../utils/utils");
-const { translate } = require("../services/translate");
-const { predict } = require("../services/intent");
+} = require('../utils/utils');
+const { translate } = require('../services/translate');
+const { predict } = require('../services/intent');
 const { ERROR_MESSAGE } = process.env;
 
-const PROMPTING_WATERFALL = "PROMPTING_WATERFALL";
-const ASK = "ASK";
+const PROMPTING_WATERFALL = 'PROMPTING_WATERFALL';
+const ASK = 'ASK';
 
 class Prompting extends ComponentDialog {
   constructor(dialog) {
@@ -35,7 +35,7 @@ class Prompting extends ComponentDialog {
   }
 
   async Ask(step) {
-    const { name, contents, repeat, retry, nextActions, extend } = step._info.options;
+    const { name, contents, repeat, retry, nextActions } = step._info.options;
 
     console.log(`[Prompting] ${name}`);
 
@@ -48,7 +48,7 @@ class Prompting extends ComponentDialog {
     if (retry) {
       if (repeat <= 0) {
         const nextId =
-          nextActions && nextActions.find((e) => e.condition == "otherwise");
+          nextActions && nextActions.find((e) => e.condition == 'otherwise');
         if (nextId && nextId.id) {
           return await step.endDialog({ actionId: nextId.id });
         }
@@ -59,11 +59,20 @@ class Prompting extends ComponentDialog {
       const notMatchMsg = getPrompt(contents, language, retry);
 
       if (notMatchMsg && notMatchMsg.message) {
-        notMatchMsg.message = replaceData({ text: notMatchMsg.message, data: variables });
+        notMatchMsg.message = replaceData({
+          text: notMatchMsg.message,
+          data: variables,
+        });
 
-        notMatchMsg.message = await translate(notMatchMsg.message, notMatchMsg.language, language);
+        notMatchMsg.message = await translate(
+          notMatchMsg.message,
+          notMatchMsg.language,
+          language
+        );
 
-        await step.context.sendActivity(replaceData({ text: notMatchMsg.message, data: variables }));
+        await step.context.sendActivity(
+          replaceData({ text: notMatchMsg.message, data: variables })
+        );
       }
     }
 
@@ -74,9 +83,8 @@ class Prompting extends ComponentDialog {
     msg.message = await translate(msg.message, msg.language, language);
 
     msg = formatMessage({
-      text: msg.message,
+      data: msg.message,
       type: msg.type,
-      extend,
       conversationData,
     });
 
@@ -91,35 +99,41 @@ class Prompting extends ComponentDialog {
       Array.isArray(extendType.data) &&
       extendType.data.length
     ) {
-      msg.channelData = {};
-
-      msg.channelData["extendData"] = extendType.data;
+      msg.channelData.extendData = extendType.data;
 
       msg.channelData.type = extendType.type;
     }
 
-    return await step.prompt(ASK, msg);
+    await step.context.sendActivity(msg);
+
+    return await step.prompt(ASK, {});
   }
 
   async BuiltinValidate(step) {
     const { id, grammarType, repeat } = step._info.options;
 
-    if (grammarType == "intent") return await step.next(step.result);
+    if (grammarType == 'intent') return await step.next(step.result);
 
     const conversationData = await this.dialog.conversationDataAccessor.get(
       step.context
     );
 
-    let answer = { name: "answer", value: step.result, type: "string" };
+    let answer = { name: 'answer', value: step.result, type: 'string' };
 
     // assign answer
     conversationData.variables = conversationData.variables.filter(
-      (x) => x.name !== "answer"
+      (x) => x.name !== 'answer'
     );
     conversationData.variables.push(answer);
 
-    if (!["yes-no", "number", "email", "phone-number", "number"].includes(grammarType)) {
-      console.log(`Validate type : ${grammarType} => go check for user response`);
+    if (
+      !['yes-no', 'number', 'email', 'phone-number', 'number'].includes(
+        grammarType
+      )
+    ) {
+      console.log(
+        `Validate type : ${grammarType} => go check for user response`
+      );
       return await step.endDialog({ checkAction: true });
     }
 
@@ -138,8 +152,8 @@ class Prompting extends ComponentDialog {
     }
 
     conversationData.variables = conversationData.variables.map((d) =>
-      d.name === "answer"
-        ? { name: "answer", value: userIntent, type: "string" }
+      d.name === 'answer'
+        ? { name: 'answer', value: userIntent, type: 'string' }
         : d
     );
 
@@ -167,13 +181,18 @@ class Prompting extends ComponentDialog {
       });
     }
 
-    conversationData.variables.push({ name: "answer", value: userIntent.intent, type: "string", filled: true });
+    conversationData.variables.push({
+      name: 'answer',
+      value: userIntent.intent,
+      type: 'string',
+      filled: true,
+    });
 
     return await step.endDialog({ checkAction: true });
   }
 
   async validateBuiltin(response, type, language) {
-    if (type == "yes-no") return await this.checkYesNo(response, language);
+    if (type == 'yes-no') return await this.checkYesNo(response, language);
 
     const types = {
       number: !isNaN(response) && response,
@@ -193,8 +212,8 @@ class Prompting extends ComponentDialog {
 
     let text = ur;
 
-    if (language && !language.startsWith("en")) {
-      text = (await translate(ur, language, "en")) || ur;
+    if (language && !language.startsWith('en')) {
+      text = (await translate(ur, language, 'en')) || ur;
     }
 
     text = text.toLowerCase();
@@ -204,11 +223,11 @@ class Prompting extends ComponentDialog {
         text
       )
     ) {
-      return "yes";
+      return 'yes';
     }
 
     if (/\b(?:no|nope|not|2|none|false|disagree)\b/.test(text)) {
-      return "no";
+      return 'no';
     }
 
     return;
