@@ -1,5 +1,5 @@
 const { ComponentDialog, WaterfallDialog } = require('botbuilder-dialogs');
-const { REPLACE_ACTION, CHECK_VARIABLE } = require('../Constant');
+const { CHECK_VARIABLE } = require('../Constant');
 
 const CHECKVARIABLE_WATERFALL = 'CHECKVARIABLE_WATERFALL';
 

@@ -6,10 +6,10 @@ const {
 const { PROMPTING } = require('../Constant');
 const {
   getPrompt,
-  replaceData,
   formatMessage,
   getExtendTypeMessage,
-} = require('../utils/utils');
+} = require('../utils/prompts');
+const { replaceData } = require('../utils/utils');
 const { translate } = require('../services/translate');
 const { predict } = require('../services/intent');
 const { ERROR_MESSAGE } = process.env;
@@ -88,11 +88,7 @@ class Prompting extends ComponentDialog {
       conversationData,
     });
 
-    const extendType = await getExtendTypeMessage(
-      contents,
-      language,
-      conversationData.channelId
-    );
+    const extendType = await getExtendTypeMessage(contents, conversationData);
 
     if (
       extendType &&
