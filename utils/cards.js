@@ -101,11 +101,7 @@ module.exports = class Cards {
 
         subtitle =
           this.currentLanguage !== this.defaultLanguage
-            ? await translate(
-                subtitle,
-                this.currentLanguage,
-                this.defaultLanguage
-              )
+            ? await translate(subtitle, this.currentLanguage, this.defaultLanguage)
             : subtitle;
 
         const card = {
@@ -137,12 +133,8 @@ module.exports = class Cards {
         if (!value || !type || !label) throw new Error('Missing parameter');
 
         const translateLabel =
-          currentLanguage !== defaultLanguage
-            ? await translate(
-                label,
-                this.currentLanguage,
-                this.defaultLanguage
-              ).slice(0, 20)
+          this.currentLanguage !== this.defaultLanguage
+            ? await translate(label, this.currentLanguage, this.defaultLanguage).slice(0, 20)
             : label.slice(0, 20);
 
         switch (type) {
@@ -184,11 +176,7 @@ module.exports = class Cards {
 
         subtitle =
           this.currentLanguage !== this.defaultLanguage
-            ? await translate(
-                subtitle,
-                this.currentLanguage,
-                this.defaultLanguage
-              )
+            ? await translate(subtitle, this.currentLanguage, this.defaultLanguage)
             : subtitle;
 
         const card = {
@@ -208,7 +196,7 @@ module.exports = class Cards {
     return result.slice(0, 10);
   }
 
-  async formatLINEButtons(buttonse) {
+  async formatLINEButtons(buttons) {
     let result = [];
     if (!Array.isArray(buttons) || !buttons.length) return result;
 
@@ -219,12 +207,8 @@ module.exports = class Cards {
         if (!value || !type || !label) throw new Error('Missing parameter');
 
         const translateLabel =
-          currentLanguage !== defaultLanguage
-            ? await translate(
-                label,
-                this.currentLanguage,
-                this.defaultLanguage
-              ).slice(0, 20)
+          this.currentLanguage !== this.defaultLanguage
+            ? await translate(label, this.currentLanguage, this.defaultLanguage).slice(0, 20)
             : label.slice(0, 20);
 
         switch (type) {
