@@ -30,7 +30,7 @@ jobs:
          - name: executing remote ssh commands using ssh key
            uses: fifsky/ssh-action@master
            with:
-              script: |
+              command: |
                  cd /home/ubuntu
                  sudo docker rmi $(sudo docker images --filter "dangling=true" -q --no-trunc)
                  sudo docker compose pull
