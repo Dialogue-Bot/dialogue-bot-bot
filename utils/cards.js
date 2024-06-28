@@ -167,7 +167,7 @@ module.exports = class Cards {
     let result = [];
     if (!Array.isArray(this.cardsData) || !this.cardsData.length) return result;
 
-    for (let data of cards) {
+    for (let data of this.cardsData) {
       try {
         let { title, subtitle, imageUrl, buttons } = data;
 
