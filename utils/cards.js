@@ -101,7 +101,11 @@ module.exports = class Cards {
 
         subtitle =
           this.currentLanguage !== this.defaultLanguage
-            ? await translate(subtitle, this.currentLanguage, this.defaultLanguage)
+            ? await translate(
+                subtitle,
+                this.currentLanguage,
+                this.defaultLanguage
+              )
             : subtitle;
 
         const card = {
@@ -132,10 +136,12 @@ module.exports = class Cards {
 
         if (!value || !type || !label) throw new Error('Missing parameter');
 
-        const translateLabel =
+        let translateLabel =
           this.currentLanguage !== this.defaultLanguage
-            ? await translate(label, this.currentLanguage, this.defaultLanguage).slice(0, 20)
-            : label.slice(0, 20);
+            ? await translate(label, this.currentLanguage, this.defaultLanguage)
+            : label;
+
+        translateLabel = translateLabel.slice(0, 20);
 
         switch (type) {
           case 'url':
@@ -176,7 +182,11 @@ module.exports = class Cards {
 
         subtitle =
           this.currentLanguage !== this.defaultLanguage
-            ? await translate(subtitle, this.currentLanguage, this.defaultLanguage)
+            ? await translate(
+                subtitle,
+                this.currentLanguage,
+                this.defaultLanguage
+              )
             : subtitle;
 
         const card = {
@@ -206,10 +216,12 @@ module.exports = class Cards {
 
         if (!value || !type || !label) throw new Error('Missing parameter');
 
-        const translateLabel =
+        let translateLabel =
           this.currentLanguage !== this.defaultLanguage
-            ? await translate(label, this.currentLanguage, this.defaultLanguage).slice(0, 20)
-            : label.slice(0, 20);
+            ? await translate(label, this.currentLanguage, this.defaultLanguage)
+            : label;
+
+        translateLabel = translateLabel.slice(0, 20);
 
         switch (type) {
           case 'url':
