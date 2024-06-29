@@ -12,6 +12,7 @@ const {
 const { replaceData } = require('../utils/utils');
 const { translate } = require('../services/translate');
 const { predict } = require('../services/intent');
+const { CustomActivityTypes } = require('../classes/CustomActivityTypes');
 const { ERROR_MESSAGE } = process.env;
 
 const PROMPTING_WATERFALL = 'PROMPTING_WATERFALL';
@@ -70,9 +71,11 @@ class Prompting extends ComponentDialog {
           language
         );
 
-        await step.context.sendActivity(
-          replaceData({ text: notMatchMsg.message, data: variables })
-        );
+        await step.context.sendActivity({
+          type: CustomActivityTypes.Message,
+          text: notMatchMsg.message,
+          channelData: {},
+        });
       }
     }
 
