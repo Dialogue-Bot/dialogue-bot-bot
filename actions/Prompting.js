@@ -180,16 +180,24 @@ class Prompting extends ComponentDialog {
       });
     }
 
-    conversationData.variables = conversationData.variables.map((d) =>
-      d.name === 'answer'
-        ? {
-            name: 'answer',
-            value: userIntent.intent,
-            type: 'string',
-            filled: true,
-          }
-        : d
-    );
+    if (conversationData.variables.find((d) => d.name === 'answer')) {
+      conversationData.variables = conversationData.variables.map((d) =>
+        d.name === 'answer'
+          ? {
+              name: 'answer',
+              value: userIntent.intent,
+              type: 'string',
+              filled: true,
+            }
+          : d
+      );
+    } else
+      conversationData.variables.push({
+        name: 'answer',
+        value: userIntent.intent,
+        type: 'string',
+        filled: true,
+      });
 
     return await step.endDialog({ checkAction: true });
   }
