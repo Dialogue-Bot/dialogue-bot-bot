@@ -199,7 +199,7 @@ class Prompting extends ComponentDialog {
       email: (response.match(
         /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g
       ) || [])[0],
-      phonenumber: (response.match(
+      'phone-number': (response.match(
         /(\+?\d{1,2}\s?)?(\(?\d{3}\)?[\s.-]?)?\d{3}[\s.-]?\d{4}/
       ) || [])[0],
     };
