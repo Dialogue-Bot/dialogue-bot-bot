@@ -1,3 +1,4 @@
+const { translate } = require('../services/translate');
 const Cards = require('./cards');
 
 const formatMessage = ({ data, type, conversationData }) => {
