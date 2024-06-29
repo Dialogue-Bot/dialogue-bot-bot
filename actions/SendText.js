@@ -52,7 +52,7 @@ class SendText extends ComponentDialog {
     const extendType = await getExtendTypeMessage(
       contents,
       language,
-      conversationData.channelId
+      conversationData
     );
 
     if (
