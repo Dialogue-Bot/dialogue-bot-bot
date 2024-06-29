@@ -22,6 +22,7 @@ const {
   endConversation,
   keyValueToObject,
   replaceSubFlowValueAssigned,
+  replaceData,
 } = require('../utils/utils');
 const { HttpRequest } = require('./HTTPRequest');
 const { SubFlow } = require('./SubFlow');
@@ -283,7 +284,9 @@ class MainDialog extends ComponentDialog {
     for (let Case of actions) {
       if (!Case) return;
 
-      const { condition, value, id } = Case;
+      let { condition, value, id } = Case;
+
+      value = replaceData({ text: value, data });
 
       switch (condition) {
         case 'empty':
