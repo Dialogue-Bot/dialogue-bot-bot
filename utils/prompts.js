@@ -1,10 +1,12 @@
 const { translate } = require('../services/translate');
 const Cards = require('./cards');
+const { replaceData } = require('./utils');
 
 const formatMessage = ({ data, type, conversationData }) => {
   if (!conversationData) return;
 
-  if (!type || !['text', 'image'].includes(type)) return { type: 'message', text: '', channelData: {} };
+  if (!type || !['text', 'image'].includes(type))
+    return { type: 'message', text: '', channelData: {} };
 
   return type === 'text'
     ? { type: 'message', text: data, channelData: {} }
@@ -77,6 +79,7 @@ const getExtendTypeMessage = async (contents, conversationData) => {
       const quickReplyData = await formatQuickReply(
         channelId,
         contents.buttons,
+        variables,
         contents.language,
         language
       );
@@ -98,17 +101,24 @@ const getExtendTypeMessage = async (contents, conversationData) => {
 const formatQuickReply = async (
   channelId,
   buttons,
+  variables,
   currentLanguage,
   defaultLanguage
 ) => {
   let result = [];
   switch (channelId) {
     case 'LIN':
-      result = formatQuickReplyLIN(buttons, currentLanguage, defaultLanguage);
+      result = await formatQuickReplyLIN(
+        buttons,
+        variables,
+        currentLanguage,
+        defaultLanguage
+      );
       break;
     case 'MSG':
       result = await formatQuickReplyMSG(
         buttons,
+        variables,
         currentLanguage,
         defaultLanguage
       );
@@ -116,6 +126,7 @@ const formatQuickReply = async (
     case 'WEB':
       result = await formatQuickReplyWEB(
         buttons,
+        variables,
         currentLanguage,
         defaultLanguage
       );
@@ -127,12 +138,14 @@ const formatQuickReply = async (
 
 const formatQuickReplyMSG = async (
   buttons,
+  variables,
   currentLanguage,
   defaultLanguage
 ) => {
   let result = [];
   for (let button of buttons) {
     try {
+      button.label = replaceData({text: button.label, data: variables})
       const translateLabel =
         currentLanguage !== defaultLanguage
           ? await translate(button.label, currentLanguage, defaultLanguage)
@@ -152,12 +165,14 @@ const formatQuickReplyMSG = async (
 
 const formatQuickReplyLIN = async (
   buttons,
+  variables,
   currentLanguage,
   defaultLanguage
 ) => {
   let result = [];
   for (let button of buttons) {
     try {
+      button.label = replaceData({text: button.label, data: variables})
       const translateLabel =
         currentLanguage !== defaultLanguage
           ? await translate(button.label, currentLanguage, defaultLanguage)
@@ -180,14 +195,16 @@ const formatQuickReplyLIN = async (
 
 const formatQuickReplyWEB = async (
   buttons,
+  variables,
   currentLanguage,
   defaultLanguage
 ) => {
   let result = [];
   if (!Array.isArray(buttons)) return result;
 
-  for (const button of buttons) {
+  for (let button of buttons) {
     try {
+      button.label = replaceData({text: button.label, data: variables})
       const translateLabel =
         currentLanguage !== defaultLanguage
           ? await translate(button.label, currentLanguage, defaultLanguage)

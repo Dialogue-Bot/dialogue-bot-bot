@@ -20,7 +20,7 @@ const replaceData = ({ text, data }) => {
         let value =
           data.find((item) => item.name === keys[0]).value || undefined;
 
-        if (keys.length === 1) return value;
+        if (keys.length <= 1) return typeof value === 'object' ? JSON.stringify(value) : value;
 
         return (
           keys
@@ -64,13 +64,7 @@ const replaceObjWithParam = (conversationData, obj) => {
 
   try {
     for (let key of arr) {
-      if (
-        obj[key] &&
-        typeof obj[key] == 'string' &&
-        obj[key].match(/^{[\w->]+}$/)
-      ) {
-        obj[key] = accessProp(obj[key].replace(/{|}/g, ''), conversationData);
-      } else if (obj[key] && typeof obj[key] == 'string') {
+      if (obj[key] && typeof obj[key] == 'string') {
         obj[key] = replaceData({ text: obj[key], data: conversationData });
       }
     }

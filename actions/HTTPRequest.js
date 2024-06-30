@@ -26,10 +26,10 @@ class HttpRequest extends ComponentDialog {
       let config = {
         method: method,
         url: replaceData({ text: url, data: conversationData.variables }),
-        data: replaceObjWithParam(conversationData.variables, keyValueToObject(body) || body),
-        headers: replaceObjWithParam(conversationData.variables, keyValueToObject(headers) || headers),
-        params: replaceObjWithParam(conversationData.variables, keyValueToObject(params) || params),
-      };
+        data: replaceObjWithParam(conversationData.variables, body),
+        headers: replaceObjWithParam(conversationData.variables, headers),
+        params: replaceObjWithParam(conversationData.variables, params),
+      }
 
       console.log(`[HTTP] ${name} ${JSON.stringify(config)}`);
 
