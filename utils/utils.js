@@ -1,5 +1,3 @@
-const { translate } = require('../services/translate');
-const Cards = require('./cards');
 const endConversation = async (step, message) => {
   if (message) await step.context.sendActivity(message);
   if (step.parent && typeof step.parent.cancelAllDialogs == 'function')

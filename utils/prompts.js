@@ -146,10 +146,7 @@ const formatQuickReplyMSG = async (
   for (let button of buttons) {
     try {
       button.label = replaceData({text: button.label, data: variables})
-      const translateLabel =
-        currentLanguage !== defaultLanguage
-          ? await translate(button.label, currentLanguage, defaultLanguage)
-          : button.label;
+      const translateLabel = await translate(button.label, currentLanguage, defaultLanguage);
       if (button.type !== 'postback') return;
       result.push({
         content_type: 'text',
@@ -173,10 +170,7 @@ const formatQuickReplyLIN = async (
   for (let button of buttons) {
     try {
       button.label = replaceData({text: button.label, data: variables})
-      const translateLabel =
-        currentLanguage !== defaultLanguage
-          ? await translate(button.label, currentLanguage, defaultLanguage)
-          : button.label;
+      const translateLabel =await translate(button.label, currentLanguage, defaultLanguage);
       if (button.type !== 'postback') return;
       result.push({
         type: 'action',
@@ -205,10 +199,7 @@ const formatQuickReplyWEB = async (
   for (let button of buttons) {
     try {
       button.label = replaceData({text: button.label, data: variables})
-      const translateLabel =
-        currentLanguage !== defaultLanguage
-          ? await translate(button.label, currentLanguage, defaultLanguage)
-          : button.label;
+      const translateLabel =  await translate(button.label, currentLanguage, defaultLanguage);
       switch (button.type) {
         case 'url':
           result.push({

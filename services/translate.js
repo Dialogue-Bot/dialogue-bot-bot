@@ -1,8 +1,8 @@
 const { default: axios } = require('axios');
 
 const translate = async (text, fromLang = 'auto', toLang = 'en') => {
-  if (!text || fromLang == toLang) return text;
-  
+  if (!text || fromLang == toLang) return replaceTextInside(text);
+
   try {
     let config = {
       method: 'get',
@@ -19,15 +19,13 @@ const translate = async (text, fromLang = 'auto', toLang = 'en') => {
       throw new Error('Can not translate text');
     }
 
-    const filterTranslateValue = data[0].map(d => d[0]).join('') || data[0][0][0];
-
-    const replaceInside = filterTranslateValue.replace(/\\\|/g, '');
+    const filterTranslateValue = replaceTextInside(data[0].map(d => d[0]).join('') || data[0][0][0]);
 
     console.log(
-      `Translated: ${fromLang} -> ${toLang} | ${text} -> ${replaceInside}`
+      `Translated: ${fromLang} -> ${toLang} | ${text} -> ${filterTranslateValue}`
     );
 
-    return replaceInside;
+    return filterTranslateValue;
   } catch (error) {
     console.log('Translate filed - ', error.message);
     console.log(error.response && error.response.data);
@@ -35,5 +33,9 @@ const translate = async (text, fromLang = 'auto', toLang = 'en') => {
     return text;
   }
 };
+
+const replaceTextInside = (text) => {
+  return typeof text === 'string' ? text.replace(/\\\|/g, '') : text;
+}
 
 module.exports = { translate };
