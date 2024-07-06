@@ -8,4 +8,5 @@ module.exports = {
   SET_DATA: "SET_DATA",
   SUB_FLOW: "SUB_FLOW",
   SEND_MAIL: "SEND_MAIL",
+  GO_TO: "GO_TO"
 };

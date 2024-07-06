@@ -13,6 +13,7 @@ const {
   SUB_FLOW,
   CHECK_VARIABLE,
   SEND_MAIL,
+  GO_TO,
 } = require('../Constant');
 
 const { getFlowByContactId } = require('../services/proxy');
@@ -28,6 +29,7 @@ const { HttpRequest } = require('./HTTPRequest');
 const { SubFlow } = require('./SubFlow');
 const { CheckVariable } = require('./CheckVariable');
 const { SendMail } = require('./SendMail');
+const { GotoAction } = require('./Goto');
 
 const CHAT = 'CHAT';
 
@@ -48,6 +50,7 @@ class MainDialog extends ComponentDialog {
     this.addDialog(new SubFlow(this));
     this.addDialog(new CheckVariable(this));
     this.addDialog(new SendMail(this));
+    this.addDialog(new GotoAction(this))
 
     this.addDialog(
       new WaterfallDialog('Main_Water_Fall', [this.ReadFlow.bind(this)])
@@ -186,12 +189,13 @@ class MainDialog extends ComponentDialog {
     const { action } = step._info.options;
 
     const actions = {
-      message: SEND_TEXT,
+      'message': SEND_TEXT,
       'prompt-and-collect': PROMPTING,
       'http-request': HTTP_REQUEST,
       'sub-flow': SUB_FLOW,
       'check-variables': CHECK_VARIABLE,
       'send-mail': SEND_MAIL,
+      'goto"': GO_TO
     };
 
     if (!actions[action]) {
