@@ -1,6 +1,6 @@
 const { ComponentDialog, WaterfallDialog } = require('botbuilder-dialogs');
 const { SUB_FLOW } = require('../Constant');
-const { keyValueToObject } = require('../utils/utils');
+const { keyValueToObject, endConversation } = require('../utils/utils');
 const { getFlowById } = require('../services/proxy');
 const { ERROR_MESSAGE } = process.env;
 
