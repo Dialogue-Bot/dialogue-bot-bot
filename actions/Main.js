@@ -195,7 +195,7 @@ class MainDialog extends ComponentDialog {
       'sub-flow': SUB_FLOW,
       'check-variables': CHECK_VARIABLE,
       'send-mail': SEND_MAIL,
-      'goto"': GO_TO
+      'goto': GO_TO
     };
 
     if (!actions[action]) {
