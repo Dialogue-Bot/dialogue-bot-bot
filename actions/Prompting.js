@@ -145,7 +145,7 @@ class Prompting extends ComponentDialog {
     if (!userIntent) {
       return await step.replaceDialog(PROMPTING_WATERFALL, {
         ...step._info.options,
-        repeat: repeat - 1,
+        repeat: repeat ? repeat - 1 : 0,
         retry: true,
       });
     }
@@ -175,7 +175,7 @@ class Prompting extends ComponentDialog {
     if (!userIntent) {
       return await step.replaceDialog(PROMPTING_WATERFALL, {
         ...step._info.options,
-        repeat: repeat - 1,
+        repeat: repeat ? repeat - 1 : 0,
         retry: true,
       });
     }
