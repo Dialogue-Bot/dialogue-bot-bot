@@ -39,7 +39,8 @@ class MainDialog extends ComponentDialog {
 
     this.adapter = adapter;
     this.conversationState = conversationState;
-    this.conversationDataAccessor = this.conversationState.createProperty('conversationData');
+    this.conversationDataAccessor =
+      this.conversationState.createProperty('conversationData');
     this.dialogState = conversationState.createProperty('DialogState');
     this.dialogSet = new DialogSet(this.dialogState);
     this.dialogSet.add(this);
@@ -50,7 +51,7 @@ class MainDialog extends ComponentDialog {
     this.addDialog(new SubFlow(this));
     this.addDialog(new CheckVariable(this));
     this.addDialog(new SendMail(this));
-    this.addDialog(new GotoAction(this))
+    this.addDialog(new GotoAction(this));
 
     this.addDialog(
       new WaterfallDialog('Main_Water_Fall', [this.ReadFlow.bind(this)])
@@ -157,7 +158,9 @@ class MainDialog extends ComponentDialog {
       if (typeof attributes == 'string')
         attributes = keyValueToObject(attributes);
     } catch (e) {
-      console.log('[Main] ReadFlow - Parse flow information failed - ' + e.message || e)
+      console.log(
+        '[Main] ReadFlow - Parse flow information failed - ' + e.message || e
+      );
     }
 
     const language =
@@ -189,17 +192,19 @@ class MainDialog extends ComponentDialog {
     const { action } = step._info.options;
 
     const actions = {
-      'message': SEND_TEXT,
+      message: SEND_TEXT,
       'prompt-and-collect': PROMPTING,
       'http-request': HTTP_REQUEST,
       'sub-flow': SUB_FLOW,
       'check-variables': CHECK_VARIABLE,
       'send-mail': SEND_MAIL,
-      'goto': GO_TO
+      goto: GO_TO,
     };
 
     if (!actions[action]) {
-      console.log('[Main] RedirectFlow - Can can not find next action type => end dialog');
+      console.log(
+        '[Main] RedirectFlow - Can can not find next action type => end dialog'
+      );
       return await endConversation(step);
     }
     return await step.beginDialog(actions[action], step._info.options);
@@ -210,6 +215,7 @@ class MainDialog extends ComponentDialog {
       nextAction: id,
       nextActions,
       assignUserResponse,
+      variable
     } = step._info.options;
     const { checkAction, actionId } = step.result;
     const conversationData = await this.conversationDataAccessor.get(
@@ -222,12 +228,15 @@ class MainDialog extends ComponentDialog {
       let findVar = conversationData.variables.find(
         (x) => x.name === assignUserResponse
       );
+
       const value = conversationData.variables.find(
         (x) => x.name === 'answer'
       )?.value;
+
       if (findVar && !findVar.filled && value) {
         findVar.value = value;
       }
+
       if (assignUserResponse === 'language' && ['en', 'vi'].includes(value))
         conversationData[assignUserResponse] = value;
     }
@@ -236,14 +245,16 @@ class MainDialog extends ComponentDialog {
 
     if (checkAction) {
       const Case = this.GetNextAction({
-        attribute: assignUserResponse || 'answer',
+        attribute: assignUserResponse || variable || 'answer',
         actions: nextActions || [],
         data: conversationData.variables,
       });
       nextAction = currentFlow.find((a) => a.id == (Case && Case.id));
 
       if (nextAction && Case) {
-        console.log(`[Main] CheckNextFlow - Pass case option : ${Case.condition}`);
+        console.log(
+          `[Main] CheckNextFlow - Pass case option : ${Case.condition}`
+        );
       }
 
       if (!nextAction) {
