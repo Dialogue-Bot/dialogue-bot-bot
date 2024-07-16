@@ -215,7 +215,8 @@ class MainDialog extends ComponentDialog {
       nextAction: id,
       nextActions,
       assignUserResponse,
-      variable
+      variable,
+      variableInput
     } = step._info.options;
     const { checkAction, actionId } = step.result;
     const conversationData = await this.conversationDataAccessor.get(
@@ -245,7 +246,7 @@ class MainDialog extends ComponentDialog {
 
     if (checkAction) {
       const Case = this.GetNextAction({
-        attribute: assignUserResponse || variable || 'answer',
+        attribute: assignUserResponse || variable || variableInput || 'answer',
         actions: nextActions || [],
         data: conversationData.variables,
       });
@@ -294,7 +295,7 @@ class MainDialog extends ComponentDialog {
   GetNextAction({ attribute, actions, data }) {
     if (!Array.isArray(actions)) return;
 
-    const checkData = data.find((x) => x.name === attribute).value;
+    const checkData = data.find((x) => x.name === attribute)?.value || replaceData({ text: attribute, data });;
 
     for (let Case of actions) {
       if (!Case) return;
